@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn about Health-wise Support - Our mission to provide professional healthcare assistance and 24/7 medical support">
+    <title>About Us - Health-wise Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#10b981',
+                        accent: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased bg-white text-gray-900">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
+                            <svg class="text-white text-xl w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-blue-900">Health-wise</h1>
+                            <p class="text-sm text-gray-600 -mt-1">Support</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="flex items-center space-x-8">
+                        <a href="index.html" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">Home</a>
+                        <a href="index.html#services" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">Services</a>
+                        <a href="about.html" class="text-gray-900 hover:text-blue-900 transition-colors font-medium">About</a>
+                        <a href="index.html#contact" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">Contact</a>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <button class="bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+                        Get Support
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- About Hero -->
+    <section class="py-20 bg-gradient-to-br from-blue-50 to-green-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-4xl mx-auto">
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+                    About <span class="text-blue-900">Health-wise Support</span>
+                </h1>
+                <p class="text-xl text-gray-600 leading-relaxed">
+                    We're dedicated to making professional healthcare accessible, reliable, and available when you need it most. Our mission is to bridge the gap between patients and quality healthcare services.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission & Vision -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h2 class="text-3xl font-bold mb-6">Our Mission</h2>
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        To provide comprehensive, accessible, and professional healthcare support services that empower individuals to take control of their health journey. We believe everyone deserves quality healthcare assistance, regardless of location or time.
+                    </p>
+                    <p class="text-gray-600 leading-relaxed">
+                        Through innovative technology and dedicated healthcare professionals, we're creating a healthcare ecosystem that's more responsive, more personal, and more effective.
+                    </p>
+                </div>
+                <div>
+                    <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                         alt="Healthcare team" 
+                         class="rounded-2xl shadow-lg w-full h-auto">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-6">Our Core Values</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    These principles guide everything we do and shape how we serve our community.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-blue-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Reliability</h3>
+                    <p class="text-gray-600">Consistent, dependable healthcare support you can count on, available 24/7 when you need it most.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-green-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Excellence</h3>
+                    <p class="text-gray-600">Committed to the highest standards of healthcare service and continuous improvement in everything we do.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-yellow-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Compassion</h3>
+                    <p class="text-gray-600">Every interaction is guided by empathy and understanding of our patients' unique needs and circumstances.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-purple-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12,1L21,5V11C21,16.55 17.16,21.74 12,23C6.84,21.74 3,16.55 3,11V5L12,1M12,7C10.89,7 10,7.89 10,9A2,2 0 0,0 12,11A2,2 0 0,0 14,9C14,7.89 13.1,7 12,7M18,9C18,14.25 15.22,17.11 12,17.11C8.78,17.11 6,14.25 6,9H12V7H6C6,5.27 7.17,3.79 8.77,3.07L12,1L15.23,3.07C16.83,3.79 18,5.27 18,7H12V9H18Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Privacy</h3>
+                    <p class="text-gray-600">Your health information is protected with the highest security standards and complete HIPAA compliance.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-indigo-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M13,13H18V18H13V13M6,6H18V11H6V6Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Innovation</h3>
+                    <p class="text-gray-600">Leveraging cutting-edge technology to make healthcare more accessible and effective for everyone.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-sm">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-red-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16,4C16.88,4 17.67,4.38 18.18,5L22,9H20L16,4M20,10V14A4,4 0 0,1 16,18H15V16H16A2,2 0 0,0 18,14V10H20M16,20A4,4 0 0,1 12,16V15H14V16A2,2 0 0,0 16,18V20M11,9.5V14.5L9.5,13L8,14.5V9.5L9.5,11L11,9.5M15,9.5V14.5L13.5,13L12,14.5V9.5L13.5,11L15,9.5Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4">Accessibility</h3>
+                    <p class="text-gray-600">Breaking down barriers to quality healthcare, making it available to everyone, everywhere, anytime.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team -->
+    <section class="py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-6">Our Leadership Team</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Meet the dedicated professionals leading our mission to transform healthcare accessibility.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400" 
+                         alt="Dr. Sarah Johnson" 
+                         class="w-48 h-48 rounded-full mx-auto mb-6 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Dr. Sarah Johnson</h3>
+                    <p class="text-blue-900 mb-3">Chief Medical Officer</p>
+                    <p class="text-gray-600">15+ years in emergency medicine and telemedicine, passionate about accessible healthcare.</p>
+                </div>
+
+                <div class="text-center">
+                    <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400" 
+                         alt="Michael Chen" 
+                         class="w-48 h-48 rounded-full mx-auto mb-6 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Michael Chen</h3>
+                    <p class="text-blue-900 mb-3">Chief Technology Officer</p>
+                    <p class="text-gray-600">Healthcare technology innovator with expertise in secure, scalable healthcare platforms.</p>
+                </div>
+
+                <div class="text-center">
+                    <img src="https://images.unsplash.com/photo-1594824209347-fe5bb39a2ad3?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400" 
+                         alt="Dr. Maria Rodriguez" 
+                         class="w-48 h-48 rounded-full mx-auto mb-6 object-cover">
+                    <h3 class="text-xl font-semibold mb-2">Dr. Maria Rodriguez</h3>
+                    <p class="text-blue-900 mb-3">Head of Patient Care</p>
+                    <p class="text-gray-600">Dedicated to ensuring every patient receives compassionate, comprehensive care.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-6">Our Impact</h2>
+                <p class="text-xl text-gray-600">Making a difference in healthcare, one patient at a time.</p>
+            </div>
+
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-blue-900 mb-2">10,000+</div>
+                    <p class="text-gray-600">Patients Served</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-green-600 mb-2">4.9/5</div>
+                    <p class="text-gray-600">Patient Satisfaction</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-yellow-600 mb-2">24/7</div>
+                    <p class="text-gray-600">Support Available</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-purple-600 mb-2">50+</div>
+                    <p class="text-gray-600">Healthcare Professionals</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 bg-blue-900 text-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-6">Ready to Experience Better Healthcare?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">
+                Join thousands of patients who trust Health-wise Support for their healthcare needs.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button class="bg-white text-blue-900 px-8 py-3 rounded-lg text-lg font-medium hover:bg-gray-100 transition-colors">
+                    Get Started Today
+                </button>
+                <button class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-medium hover:bg-white hover:text-blue-900 transition-colors">
+                    Learn More
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-6">
+                    <div class="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
+                        <svg class="text-white text-xl w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-blue-400">Health-wise Support</h1>
+                    </div>
+                </div>
+                <p class="text-gray-400 mb-6">Professional healthcare support when you need it most.</p>
+                <div class="flex justify-center space-x-8 mb-8">
+                    <a href="index.html" class="text-gray-400 hover:text-blue-400 transition-colors">Home</a>
+                    <a href="about.html" class="text-gray-400 hover:text-blue-400 transition-colors">About</a>
+                    <a href="index.html#services" class="text-gray-400 hover:text-blue-400 transition-colors">Services</a>
+                    <a href="index.html#contact" class="text-gray-400 hover:text-blue-400 transition-colors">Contact</a>
+                </div>
+                <p class="text-gray-400 text-sm">© 2024 Health-wise Support. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
