@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional healthcare support platform providing 24/7 medical assistance, virtual consultations, and comprehensive health services">
+    <meta name="theme-color" content="#1e3a8a">
+    <title>Health-wise Support - Professional Healthcare Assistance 24/7</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a',
+                        secondary: '#10b981',
+                        accent: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .health-gradient {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(16, 185, 129, 0.05) 50%, rgba(245, 158, 11, 0.05) 100%);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased bg-white text-gray-900">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-200">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
+                            <svg class="text-white text-xl w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-blue-900">Health-wise</h1>
+                            <p class="text-sm text-gray-600 -mt-1">Support</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:block">
+                    <div class="flex items-center space-x-8">
+                        <a href="#home" class="text-gray-900 hover:text-blue-900 transition-colors font-medium">Home</a>
+                        <a href="#services" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">Services</a>
+                        <a href="#faq" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">FAQ</a>
+                        <a href="#contact" class="text-gray-600 hover:text-blue-900 transition-colors font-medium">Contact</a>
+                    </div>
+                </div>
+
+                <!-- CTA Button -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <button class="bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+                        Get Support
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-gray-600 hover:text-gray-900">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
+                    <a href="#home" class="block px-3 py-2 text-gray-900 hover:text-blue-900 transition-colors font-medium">Home</a>
+                    <a href="#services" class="block px-3 py-2 text-gray-600 hover:text-blue-900 transition-colors font-medium">Services</a>
+                    <a href="#faq" class="block px-3 py-2 text-gray-600 hover:text-blue-900 transition-colors font-medium">FAQ</a>
+                    <a href="#contact" class="block px-3 py-2 text-gray-600 hover:text-blue-900 transition-colors font-medium">Contact</a>
+                    <div class="pt-2">
+                        <button class="w-full bg-blue-900 text-white px-6 py-2 rounded-lg hover:bg-blue-800 transition-colors">
+                            Get Support
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="health-gradient py-20 lg:py-32">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <div class="space-y-4">
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
+                            Professional 
+                            <span class="text-blue-900">Health Support</span> 
+                            When You Need It Most
+                        </h1>
+                        <p class="text-xl text-gray-600 leading-relaxed">
+                            Access comprehensive healthcare assistance, expert guidance, and 24/7 support from certified professionals. Your health journey starts here.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button class="bg-blue-900 text-white px-8 py-3 rounded-lg text-lg hover:bg-blue-800 transition-colors flex items-center justify-center">
+                            <svg class="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                            </svg>
+                            Get Immediate Help
+                        </button>
+                        <button class="border-2 border-blue-900 text-blue-900 px-8 py-3 rounded-lg text-lg hover:bg-blue-900 hover:text-white transition-colors flex items-center justify-center">
+                            <svg class="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                            </svg>
+                            Schedule Consultation
+                        </button>
+                    </div>
+
+                    <!-- Trust Indicators -->
+                    <div class="flex items-center space-x-6 pt-4">
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z"/>
+                            </svg>
+                            <span class="text-sm text-gray-600 font-medium">HIPAA Compliant</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2Z"/>
+                            </svg>
+                            <span class="text-sm text-gray-600 font-medium">24/7 Available</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16,4C16.88,4 17.67,4.38 18.18,5L22,9H20L16,4M20,10V14A4,4 0 0,1 16,18H15V16H16A2,2 0 0,0 18,14V10H20M16,20A4,4 0 0,1 12,16V15H14V16A2,2 0 0,0 16,18V20M11,9.5V14.5L9.5,13L8,14.5V9.5L9.5,11L11,9.5M15,9.5V14.5L13.5,13L12,14.5V9.5L13.5,11L15,9.5Z"/>
+                            </svg>
+                            <span class="text-sm text-gray-600 font-medium">Licensed Professionals</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
+                         alt="Professional healthcare consultant" 
+                         class="rounded-2xl shadow-2xl w-full h-auto">
+
+                    <!-- Floating Stats Cards -->
+                    <div class="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <svg class="text-green-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M16,4C16.88,4 17.67,4.38 18.18,5L22,9H20L16,4M20,10V14A4,4 0 0,1 16,18H15V16H16A2,2 0 0,0 18,14V10H20M16,20A4,4 0 0,1 12,16V15H14V16A2,2 0 0,0 16,18V20M11,9.5V14.5L9.5,13L8,14.5V9.5L9.5,11L11,9.5M15,9.5V14.5L13.5,13L12,14.5V9.5L13.5,11L15,9.5Z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">10,000+</p>
+                                <p class="text-sm text-gray-600">Patients Helped</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="absolute -top-6 -right-6 bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <span class="text-yellow-600 text-xl">★</span>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">4.9/5</p>
+                                <p class="text-sm text-gray-600">Satisfaction Rate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    Comprehensive Healthcare 
+                    <span class="text-blue-900">Services</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    From emergency consultations to ongoing health management, we provide the full spectrum of healthcare support services.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Emergency Support -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-red-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-red-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18.92,6.01C18.72,5.42 18.16,5 17.5,5H6.5C5.84,5 5.28,5.42 5.08,6.01L3,12V20A1,1 0 0,0 4,21H5A1,1 0 0,0 6,20V19H18V20A1,1 0 0,0 19,21H20A1,1 0 0,0 21,20V12L18.92,6.01M6.5,7H17.5L19,11H5L6.5,7M7,13A1.5,1.5 0 0,1 8.5,14.5A1.5,1.5 0 0,1 7,16A1.5,1.5 0 0,1 5.5,14.5A1.5,1.5 0 0,1 7,13M17,13A1.5,1.5 0 0,1 18.5,14.5A1.5,1.5 0 0,1 17,16A1.5,1.5 0 0,1 15.5,14.5A1.5,1.5 0 0,1 17,13Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Emergency Support</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Immediate medical assistance and emergency guidance available 24/7. Connect with emergency responders instantly.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Learn More 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Virtual Consultations -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-green-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Virtual Consultations</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Connect with licensed healthcare professionals from the comfort of your home through secure video consultations.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Book Session 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Health Monitoring -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-blue-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Health Monitoring</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Track your health metrics, receive personalized insights, and get proactive recommendations from our AI-powered platform.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Start Tracking 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Prescription Management -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-yellow-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6,3A3,3 0 0,1 9,6C9,7.31 8.17,8.42 7,8.83V21H5V8.83C3.83,8.42 3,7.31 3,6A3,3 0 0,1 6,3M6,5A1,1 0 0,0 5,6A1,1 0 0,0 6,7A1,1 0 0,0 7,6A1,1 0 0,0 6,5M9,13V15H21V13H9M9,9V11H21V9H9M9,17V19H21V17H9Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Prescription Management</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Digital prescription management, automatic refill reminders, and direct pharmacy coordination services.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Manage Prescriptions 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mental Health Support -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-green-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21.59,11.59L13.5,19.68L9.83,16L8.42,17.41L13.5,22.5L23,13M6.24,8.75C7.26,8.75 8.1,7.91 8.1,6.89C8.1,5.87 7.26,5.03 6.24,5.03C5.22,5.03 4.38,5.87 4.38,6.89C4.38,7.91 5.22,8.75 6.24,8.75M11.5,12C12.95,12 16.5,13.17 16.5,15.75V18H14.5V16H13.5V18H11.5V15.75C11.5,13.17 7.95,12 6.5,12C5.05,12 1.5,13.17 1.5,15.75V18H3.5V16H4.5V18H6.5V15.75C6.5,15.41 6.73,15.09 7.17,14.79C7.61,14.5 8.21,14.25 8.85,14.07C9.5,13.89 10.18,13.8 10.85,13.8C11.29,13.8 11.73,13.85 12.13,13.93C11.86,13.95 11.68,14.11 11.5,14.5V12Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Mental Health Support</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Professional mental health counseling, therapy sessions, and emotional wellness programs tailored to your needs.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Find Support 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Health Education -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg transition-shadow">
+                    <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
+                        <svg class="text-blue-600 w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-4">Health Education</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Access comprehensive health resources, educational materials, and personalized wellness programs.
+                    </p>
+                    <button class="text-blue-900 hover:text-blue-700 font-medium flex items-center">
+                        Explore Resources 
+                        <svg class="ml-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                    Frequently Asked 
+                    <span class="text-blue-900">Questions</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Get answers to common questions about our healthcare services and support options.
+                </p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-4">
+                <!-- FAQ 1 -->
+                <div class="bg-white border border-gray-200 rounded-xl">
+                    <button onclick="toggleFAQ('faq1')" class="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">How quickly can I get medical assistance?</h3>
+                            <svg id="faq1-icon" class="h-5 w-5 transform transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    <div id="faq1-content" class="hidden px-6 pb-6">
+                        <p class="text-gray-600 leading-relaxed">
+                            Our emergency support is available 24/7 with response times typically under 2 minutes for urgent situations. For non-emergency consultations, you can usually connect with a healthcare professional within 15-30 minutes.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="bg-white border border-gray-200 rounded-xl">
+                    <button onclick="toggleFAQ('faq2')" class="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">Are virtual consultations covered by insurance?</h3>
+                            <svg id="faq2-icon" class="h-5 w-5 transform transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    <div id="faq2-content" class="hidden px-6 pb-6">
+                        <p class="text-gray-600 leading-relaxed">
+                            Yes, most insurance plans now cover telemedicine consultations. We work with major insurance providers and can help verify your coverage before your appointment. We also offer affordable self-pay options.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="bg-white border border-gray-200 rounded-xl">
+                    <button onclick="toggleFAQ('faq3')" class="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">How secure is my health information?</h3>
+                            <svg id="faq3-icon" class="h-5 w-5 transform transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    <div id="faq3-content" class="hidden px-6 pb-6">
+                        <p class="text-gray-600 leading-relaxed">
+                            We maintain the highest security standards and are fully HIPAA compliant. All communications are encrypted, and your personal health information is protected with enterprise-grade security measures. Your privacy is our top priority.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="bg-white border border-gray-200 rounded-xl">
+                    <button onclick="toggleFAQ('faq4')" class="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">What types of conditions can you help with?</h3>
+                            <svg id="faq4-icon" class="h-5 w-5 transform transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+                            </svg>
+                        </div>
+                    </button>
+                    <div id="faq4-content" class="hidden px-6 pb-6">
+                        <p class="text-gray-600 leading-relaxed">
+                            Our healthcare professionals can assist with a wide range of conditions including urgent care needs, chronic disease management, mental health support, preventive care, prescription management, and general health consultations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6">
+                        Get In 
+                        <span class="text-blue-900">Touch</span>
+                    </h2>
+                    <p class="text-xl text-gray-600">
+                        Ready to start your health journey? Contact us today and let our experts help you achieve your wellness goals.
+                    </p>
+                </div>
+
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <!-- Contact Form -->
+                    <div class="space-y-6">
+                        <form class="space-y-6">
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                    <input type="text" id="firstName" placeholder="John" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                    <input type="text" id="lastName" placeholder="Doe" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" id="email" placeholder="john.doe@example.com" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <input type="tel" id="phone" placeholder="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                                <select id="subject" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Select a subject</option>
+                                    <option value="general">General Inquiry</option>
+                                    <option value="emergency">Emergency Support</option>
+                                    <option value="consultation">Virtual Consultation</option>
+                                    <option value="insurance">Insurance Questions</option>
+                                    <option value="technical">Technical Support</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                                <textarea id="message" rows="5" placeholder="Please describe how we can help you..." required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-900 text-white px-6 py-3 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center">
+                                <svg class="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                                </svg>
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-6">Contact Information</h3>
+                            <div class="space-y-6">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
+                                        <svg class="text-blue-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">Emergency Hotline</h4>
+                                        <p class="text-gray-600">Available 24/7 for urgent medical assistance</p>
+                                        <p class="text-blue-900 font-medium mt-1">+1 (800) 911-HELP</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mt-1">
+                                        <svg class="text-green-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">General Support</h4>
+                                        <p class="text-gray-600">For non-urgent questions and support</p>
+                                        <p class="text-green-600 font-medium mt-1">support@healthwise.com</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mt-1">
+                                        <svg class="text-yellow-600 w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900">Main Office</h4>
+                                        <p class="text-gray-600">Visit us for in-person consultations</p>
+                                        <p class="text-yellow-600 font-medium mt-1">123 Health St, Medical City, MC 12345</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-xl p-6">
+                            <h4 class="font-semibold text-gray-900 mb-4">Business Hours</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Emergency Support:</span>
+                                    <span class="font-medium">24/7</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">General Support:</span>
+                                    <span class="font-medium">Mon-Fri 8AM-8PM</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Weekend Support:</span>
+                                    <span class="font-medium">Sat-Sun 9AM-6PM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="lg:col-span-2">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-10 h-10 bg-blue-900 rounded-lg flex items-center justify-center">
+                            <svg class="text-white text-xl w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-blue-400">Health-wise</h1>
+                            <p class="text-sm text-gray-400 -mt-1">Support</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 mb-6 leading-relaxed max-w-md">
+                        Providing comprehensive healthcare support and professional medical assistance to help you maintain optimal health and wellness.
+                    </p>
+                    <div class="flex space-x-4">
+                        <button class="w-10 h-10 bg-blue-900/20 rounded-lg flex items-center justify-center hover:bg-blue-900/30 transition-colors">
+                            <svg class="text-blue-400 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-blue-900/20 rounded-lg flex items-center justify-center hover:bg-blue-900/30 transition-colors">
+                            <svg class="text-blue-400 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-blue-900/20 rounded-lg flex items-center justify-center hover:bg-blue-900/30 transition-colors">
+                            <svg class="text-blue-400 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-blue-900/20 rounded-lg flex items-center justify-center hover:bg-blue-900/30 transition-colors">
+                            <svg class="text-blue-400 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h3 class="font-semibold text-lg mb-6">Quick Links</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-gray-400 hover:text-blue-400 transition-colors">Home</a></li>
+                        <li><a href="#services" class="text-gray-400 hover:text-blue-400 transition-colors">Services</a></li>
+                        <li><a href="#faq" class="text-gray-400 hover:text-blue-400 transition-colors">FAQ</a></li>
+                        <li><a href="#contact" class="text-gray-400 hover:text-blue-400 transition-colors">Contact</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">About Us</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Careers</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal -->
+                <div>
+                    <h3 class="font-semibold text-lg mb-6">Legal</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Cookie Policy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">HIPAA Compliance</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-blue-400 transition-colors">Accessibility</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8">
+                <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                    <p class="text-gray-400 text-sm">
+                        © 2024 Health-wise Support. All rights reserved.
+                    </p>
+                    <p class="text-gray-400 text-sm">
+                        Licensed healthcare providers • HIPAA compliant • 24/7 emergency support
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // FAQ toggle
+        function toggleFAQ(faqId) {
+            const content = document.getElementById(faqId + '-content');
+            const icon = document.getElementById(faqId + '-icon');
+            
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your message! We\'ll respond within 24 hours.');
+            this.reset();
+        });
+    </script>
+</body>
+</html>
