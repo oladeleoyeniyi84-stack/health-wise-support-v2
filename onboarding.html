@@ -1,1 +1,139 @@
-https://oladeleoyeniyi84-stack.github.io/health-wise-support-v2/onboarding.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Health Chat - Health-wise</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { background: white; padding: 16px 24px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 16px; }
+        .back-btn { color: #6b7280; }
+        .ai-info { display: flex; align-items: center; gap: 12px; }
+        .ai-avatar { width: 40px; height: 40px; background: linear-gradient(to bottom right, #2563eb, #9333ea); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; }
+        .ai-name { font-size: 18px; font-weight: 600; color: #111827; }
+        .ai-status { font-size: 14px; color: #059669; }
+        .chat-area { flex: 1; padding: 16px 24px; overflow-y: auto; }
+        .message { display: flex; gap: 12px; margin-bottom: 16px; }
+        .message.user { justify-content: flex-end; }
+        .message.user .content { background: #2563eb; color: white; border-radius: 16px 16px 4px 16px; }
+        .ai-avatar-small { width: 32px; height: 32px; background: linear-gradient(to bottom right, #2563eb, #9333ea); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
+        .content { background: white; border-radius: 16px 16px 16px 4px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 280px; }
+        .insights-card { background: linear-gradient(to right, #eff6ff, #faf5ff); border: 1px solid #dbeafe; border-radius: 16px 16px 16px 4px; padding: 16px; margin-bottom: 12px; }
+        .insights-title { font-weight: 600; color: #111827; margin-bottom: 8px; }
+        .insight-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; color: #374151; }
+        .timestamp { font-size: 12px; color: #6b7280; margin-top: 4px; }
+        .recommendation { background: #f0fdf4; border-radius: 12px; padding: 12px; margin: 12px 0; }
+        .rec-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #166534; margin-bottom: 8px; }
+        .rec-text { font-size: 14px; color: #15803d; }
+        .typing { display: flex; gap: 4px; }
+        .dot { width: 8px; height: 8px; background: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .input-area { background: white; padding: 16px 24px; border-top: 1px solid #e5e7eb; }
+        .input-row { display: flex; align-items: center; gap: 12px; }
+        .input-field { flex: 1; background: #f3f4f6; border-radius: 25px; padding: 12px 16px; border: none; outline: none; }
+        .send-btn { width: 40px; height: 40px; background: #2563eb; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        .quick-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .quick-btn { background: #dbeafe; color: #1d4ed8; padding: 8px 12px; border-radius: 20px; font-size: 14px; border: none; cursor: pointer; }
+        .quick-btn.green { background: #dcfce7; color: #15803d; }
+        .quick-btn.purple { background: #f3e8ff; color: #7c3aed; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn">←</button>
+        <div class="ai-info">
+            <div class="ai-avatar">🤖</div>
+            <div>
+                <div class="ai-name">AI Health Assistant</div>
+                <div class="ai-status">● Online</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="message">
+            <div class="ai-avatar-small">🤖</div>
+            <div>
+                <div class="content">
+                    <p>Hi! I'm your AI health assistant. I've analyzed your recent activity and have some personalized insights for you. 🏃‍♂️</p>
+                </div>
+                <div class="timestamp">Just now</div>
+            </div>
+        </div>
+
+        <div class="message">
+            <div class="ai-avatar-small">🤖</div>
+            <div>
+                <div class="insights-card">
+                    <div class="insights-title">🎯 Personalized Health Insights</div>
+                    <div class="insight-item">
+                        <span style="color: #059669;">✓</span>
+                        <span>You're 75% towards your daily step goal!</span>
+                    </div>
+                    <div class="insight-item">
+                        <span style="color: #ea580c;">⚡</span>
+                        <span>Your heart rate suggests great cardio fitness</span>
+                    </div>
+                    <div class="insight-item">
+                        <span style="color: #2563eb;">💧</span>
+                        <span>Consider drinking 2 more glasses of water today</span>
+                    </div>
+                </div>
+                <div class="timestamp">2 min ago</div>
+            </div>
+        </div>
+
+        <div class="message user">
+            <div class="content">
+                <p>What's the best time to exercise based on my sleep pattern?</p>
+            </div>
+        </div>
+
+        <div class="message">
+            <div class="ai-avatar-small">🤖</div>
+            <div>
+                <div class="content">
+                    <p style="margin-bottom: 12px;">Based on your sleep data, you typically get your best sleep from 11 PM to 7 AM. Here's my recommendation:</p>
+                    <div class="recommendation">
+                        <div class="rec-title">
+                            <span>🌅</span>
+                            <span>Morning Exercise (7:30-8:30 AM)</span>
+                        </div>
+                        <p class="rec-text">Optimal for your circadian rhythm and energy levels</p>
+                    </div>
+                    <p style="font-size: 14px; color: #6b7280;">This timing will boost your energy for the day and won't interfere with your sleep quality.</p>
+                </div>
+                <div class="timestamp">1 min ago</div>
+            </div>
+        </div>
+
+        <div class="message">
+            <div class="ai-avatar-small">🤖</div>
+            <div>
+                <div class="content">
+                    <div class="typing">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-row">
+            <input type="text" class="input-field" placeholder="Ask about your health...">
+            <button class="send-btn">➤</button>
+        </div>
+        <div class="quick-actions">
+            <button class="quick-btn">💪 Workout tips</button>
+            <button class="quick-btn green">🥗 Nutrition</button>
+            <button class="quick-btn purple">😴 Sleep</button>
+        </div>
+    </div>
+</body>
+</html>
