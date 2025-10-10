@@ -48,8 +48,10 @@ jobs:
     - name: Install dependencies
       run: npm install
       
-    - name: Build web app
-      run: npm run build
+    - name: Build web app (client only)
+      run: npx vite build --config client/vite.config.ts
+      env:
+        NODE_ENV: production
       
     - name: Sync Capacitor Android
       run: npx cap sync android
