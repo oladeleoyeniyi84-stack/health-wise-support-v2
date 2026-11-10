@@ -1,0 +1,15 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { verifyCheckoutLineItems } from "../src/integrations/stripe-line-items.mjs";
+const order={id:"order_1",stripeSessionId:"cs_test_123",configuredPriceId:"price_Abc123",amountMinor:1500,currency:"usd"};
+const session={id:"cs_test_123",livemode:false,payment_status:"paid",mode:"payment",amount_total:1500,currency:"usd"};
+const lineItems=[{quantity:1,amount_total:1500,price:{id:"price_Abc123",active:true,currency:"usd"}}];
+const input={order,session,lineItems};
+test("accepts exact sandbox line item and amount",()=>assert.equal(verifyCheckoutLineItems(input).verified,true));
+test("rejects live session",()=>assert.throws(()=>verifyCheckoutLineItems({...input,session:{...session,livemode:true}}),/sandbox_session_required/));
+test("rejects wrong Stripe price",()=>assert.throws(()=>verifyCheckoutLineItems({...input,lineItems:[{...lineItems[0],price:{...lineItems[0].price,id:"price_Other"}}]}),/line_item_mismatch/));
+test("rejects multiple line items",()=>assert.throws(()=>verifyCheckoutLineItems({...input,lineItems:[...lineItems,...lineItems]}),/line_item_mismatch/));
+test("rejects incorrect quantity",()=>assert.throws(()=>verifyCheckoutLineItems({...input,lineItems:[{...lineItems[0],quantity:2}]}),/line_item_mismatch/));
+test("rejects session amount mismatch",()=>assert.throws(()=>verifyCheckoutLineItems({...input,session:{...session,amount_total:1200}}),/amount_mismatch/));
+test("rejects inactive price",()=>assert.throws(()=>verifyCheckoutLineItems({...input,lineItems:[{...lineItems[0],price:{...lineItems[0].price,active:false}}]}),/price_inactive_or_currency_mismatch/));
+test("rejects unpaid session",()=>assert.throws(()=>verifyCheckoutLineItems({...input,session:{...session,payment_status:"unpaid"}}),/settled_payment_required/));
