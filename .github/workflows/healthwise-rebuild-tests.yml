@@ -1,0 +1,28 @@
+name: Healthwise Rebuild Unit Tests
+on:
+  push:
+    branches:
+      - 'rebuild/**'
+    paths:
+      - 'rebuild/**'
+      - '.github/workflows/healthwise-rebuild-tests.yml'
+  pull_request:
+    paths:
+      - 'rebuild/**'
+      - '.github/workflows/healthwise-rebuild-tests.yml'
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated dependency-free tests
+        run: npm test
