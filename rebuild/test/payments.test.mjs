@@ -1,0 +1,17 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { validateCheckoutRequest } from "../src/domain/checkout.mjs";
+import { evaluatePaymentEvent } from "../src/domain/payment-events.mjs";
+const catalog = [{key:"quick",stripePriceId:"price_Abc123"}];
+const req = {body:{consultationKey:"quick"},user:{id:"user1"},catalog,idempotencyKey:"unique_request_key_123"};
+test("checkout requires authentication",()=>assert.throws(()=>validateCheckoutRequest({...req,user:null}),/authentication_required/));
+test("checkout rejects unknown tier",()=>assert.throws(()=>validateCheckoutRequest({...req,body:{consultationKey:"vip"}}),/invalid_consultation/));
+test("checkout rejects weak idempotency key",()=>assert.throws(()=>validateCheckoutRequest({...req,idempotencyKey:"123"}),/invalid_idempotency_key/));
+test("checkout maps approved tier to configured price",()=>assert.equal(validateCheckoutRequest(req).stripePriceId,"price_Abc123"));
+const order={id:"order1",userId:"user1",stripeSessionId:"cs_test_abc",status:"pending"};
+const event={id:"evt_123abc",type:"checkout.session.completed",data:{object:{id:"cs_test_abc",payment_status:"paid",mode:"payment",client_reference_id:"user1",metadata:{orderId:"order1"}}}};
+test("webhook requires provider signature verification",()=>assert.throws(()=>evaluatePaymentEvent({signatureVerified:false,event,order}),/signature_required/));
+test("matching verified paid event authorizes transition",()=>assert.equal(evaluatePaymentEvent({signatureVerified:true,event,order}).action,"mark_paid"));
+test("mismatched user never marks paid",()=>assert.equal(evaluatePaymentEvent({signatureVerified:true,event:{...event,data:{object:{...event.data.object,client_reference_id:"other"}}},order}).action,"manual_review"));
+test("unpaid checkout never marks paid",()=>assert.equal(evaluatePaymentEvent({signatureVerified:true,event:{...event,data:{object:{...event.data.object,payment_status:"unpaid"}}},order}).action,"manual_review"));
+test("repeat paid event is ignored",()=>assert.equal(evaluatePaymentEvent({signatureVerified:true,event,order:{...order,status:"paid"}}).action,"ignore"));
