@@ -1,12 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { processSandboxWebhook } from "../src/integrations/stripe-webhook.mjs";
-const order = { id:"order_1", userId:"user_1", stripeSessionId:"cs_test_abc", status:"pending", amountMinor:1500, currency:"usd", consultationKey:"quick" };
-const event = { id:"evt_123abc", livemode:false, type:"checkout.session.completed", data:{ object:{ id:"cs_test_abc", payment_status:"paid", mode:"payment", client_reference_id:"user_1", amount_total:1500, currency:"usd", metadata:{orderId:"order_1", consultationKey:"quick"} } } };
+const order = { id:"order_1", userId:"user_1", stripeSessionId:"cs_test_abc", status:"pending", amountMinor:1500, currency:"usd", consultationKey:"quick", configuredPriceId:"price_Abc123" };
+const event = { id:"evt_123abc", livemode:false, type:"checkout.session.completed", data:{ object:{ id:"cs_test_abc", livemode:false, payment_status:"paid", mode:"payment", client_reference_id:"user_1", amount_total:1500, currency:"usd", metadata:{orderId:"order_1", consultationKey:"quick"} } } };
 const rawBody=Buffer.from('{"test":true}');
 function harness(e=event, o=order) {
   const applied=[];let inserted=false;
-  const stripe={webhooks:{constructEvent:()=>e}};
+  const stripe={
+    webhooks:{constructEvent:()=>e},
+    checkout:{sessions:{listLineItems:async()=>({has_more:false,data:[{quantity:1,amount_total:1500,price:{id:"price_Abc123",active:true,currency:"usd"}}]})}}
+  };
   const repository={transaction:async fn=>fn({recordEventOnce:async()=>{if(inserted)return false;inserted=true;return true;},lockOrderBySession:async()=>o,applyDecision:async d=>{applied.push(d);}})};
   return {stripe,repository,applied};
 }
@@ -21,3 +24,7 @@ test("wrong currency triggers manual review",async()=>{const h=harness({...event
 test("wrong consultation triggers manual review",async()=>{const h=harness({...event,data:{object:{...event.data.object,metadata:{...event.data.object.metadata,consultationKey:"premium"}}}});assert.equal((await processSandboxWebhook(params(h))).action,"manual_review");});
 test("unknown order fails closed",async()=>{const h=harness(event,null);await assert.rejects(processSandboxWebhook(params(h)),/unknown_order/);});
 test("unknown event type never grants entitlement",async()=>{const h=harness({...event,type:"customer.created"});assert.equal((await processSandboxWebhook(params(h))).action,"ignore");});
+test("missing provider lookup fails closed",async()=>{const h=harness();delete h.stripe.checkout;assert.equal((await processSandboxWebhook(params(h))).action,"manual_review");});
+test("incorrect provider price fails closed",async()=>{const h=harness();h.stripe.checkout.sessions.listLineItems=async()=>({has_more:false,data:[{quantity:1,amount_total:1500,price:{id:"price_Wrong",active:true,currency:"usd"}}]});assert.equal((await processSandboxWebhook(params(h))).action,"manual_review");});
+test("incomplete provider pagination fails closed",async()=>{const h=harness();h.stripe.checkout.sessions.listLineItems=async()=>({has_more:true,data:[]});assert.equal((await processSandboxWebhook(params(h))).action,"manual_review");});
+test("missing authoritative stored price fails closed",async()=>{const h=harness(event,{...order,configuredPriceId:null});assert.equal((await processSandboxWebhook(params(h))).action,"manual_review");});
