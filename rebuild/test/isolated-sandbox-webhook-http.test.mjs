@@ -81,3 +81,13 @@ test("incomplete HTTP body never invokes payment reconciliation",async()=>{
  });
  assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
 });
+
+test("oversized streamed chunked body fails before signature verification and reconciliation",async()=>{
+ const h=harness();
+ await withServer(h,async url=>{
+  const response=await fetch(url,{method:"POST",headers:{"stripe-signature":"valid","transfer-encoding":"chunked"},body:"x".repeat(262145)});
+  assert.equal(response.status,413);
+  assert.equal((await response.json()).error,"payload_too_large");
+ });
+ assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
+});
