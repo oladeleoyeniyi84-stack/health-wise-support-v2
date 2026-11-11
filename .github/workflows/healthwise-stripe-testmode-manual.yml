@@ -1,0 +1,37 @@
+name: Healthwise Stripe Test-Mode Manual Gate
+# Deliberately no push, pull_request, or scheduled trigger.
+# The workflow performs ONLY local preflight validation. It does not call Stripe.
+on:
+  workflow_dispatch:
+    inputs:
+      acknowledge_test_only:
+        description: 'Type TEST_ONLY_NO_PROVIDER_CALLS to acknowledge offline preflight'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  offline-preflight:
+    if: ${{ inputs.acknowledge_test_only == 'TEST_ONLY_NO_PROVIDER_CALLS' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm no provider credentials are present
+        env:
+          STRIPE_SECRET_KEY: ''
+          STRIPE_WEBHOOK_SECRET: ''
+        run: |
+          test -z "$STRIPE_SECRET_KEY"
+          test -z "$STRIPE_WEBHOOK_SECRET"
+      - name: Run payment safety and signature boundary unit tests
+        run: npm test
+      - name: Confirm provider calls remain disabled
+        run: |
+          echo 'OFFLINE_PREFLIGHT_ONLY: no Stripe API requests or Checkout sessions created.'
