@@ -14,8 +14,8 @@ dst="$HEALTHWISE_RESTORE_DATABASE_URL"
 # The CI service starts with fresh databases. Create isolated schema and fixture.
 psql "$src" -v ON_ERROR_STOP=1 -c 'CREATE SCHEMA hw_recovery_fixture'
 # Apply the actual design migration in a dedicated schema, not a substitute fixture schema.
-sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' rebuild/db/001_foundation.sql > "$tmpdir/migration.sql"
-{ printf 'SET search_path TO hw_recovery_fixture, public;\\n'; cat "$tmpdir/migration.sql"; } | psql "$src" -v ON_ERROR_STOP=1
+sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' db/001_foundation.sql > "$tmpdir/migration.sql"
+{ printf 'SET search_path TO hw_recovery_fixture, public;\n'; cat "$tmpdir/migration.sql"; } | psql "$src" -v ON_ERROR_STOP=1
 psql "$src" -v ON_ERROR_STOP=1 <<'SQL'
 SET search_path TO hw_recovery_fixture, public;
 INSERT INTO accounts(id,provider_subject) VALUES ('00000000-0000-4000-8000-000000000001','synthetic-recovery');
