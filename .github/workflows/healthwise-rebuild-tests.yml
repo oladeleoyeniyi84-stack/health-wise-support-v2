@@ -58,3 +58,18 @@ jobs:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
           HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
         run: node test/postgres-integration.mjs
+  stripe-sdk-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral official Stripe SDK
+        run: npm install --no-save --package-lock=false stripe
+      - name: Verify real SDK webhook signature using offline synthetic event
+        run: node test/stripe-sdk-signature.mjs
