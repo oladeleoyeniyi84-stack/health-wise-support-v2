@@ -20,3 +20,14 @@ test("provider timeout setting is bounded and cannot be disabled",async()=>{
   await assert.rejects(reconcileSandboxPayment({event,repository,providerTimeoutMs}),/invalid_provider_timeout/);
  }
 });
+
+test("late provider completion after timeout cannot apply a payment",async()=>{
+ let finishLookup,transactions=0;
+ const providerResponse=new Promise(resolve=>{finishLookup=resolve;});
+ const repository={findOrderBySession:async()=>order,transaction:async()=>{transactions++;throw Error("late transaction");}};
+ const stripe={checkout:{sessions:{listLineItems:()=>providerResponse}}};
+ await assert.rejects(reconcileSandboxPayment({event,stripe,repository,providerTimeoutMs:10}),/stripe_lookup_retryable/);
+ finishLookup({has_more:false,data:[{quantity:1,amount_total:1500,price:{id:"price_123",active:true,currency:"usd"}}]});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(transactions,0);
+});
