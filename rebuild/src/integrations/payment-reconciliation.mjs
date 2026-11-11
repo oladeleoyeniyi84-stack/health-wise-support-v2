@@ -9,7 +9,7 @@ import { verifyCheckoutLineItems } from "./stripe-line-items.mjs";
  * This is NOT connected to an HTTP route and must not be used for production.
  */
 export async function reconcileSandboxPayment({ event, stripe, repository }) {
-  if (!event || event.livemode !== false || event.type !== "checkout.session.completed") throw new Error("sandbox_event_required");
+  if (!event || event.livemode !== false || !/^evt_[A-Za-z0-9]+$/.test(event.id ?? "") || event.type !== "checkout.session.completed") throw new Error("sandbox_event_required");
   const session = event.data?.object;
   if (!session || !/^cs_test_[A-Za-z0-9]+$/.test(session.id ?? "")) throw new Error("sandbox_session_required");
   if (typeof repository?.findOrderBySession !== "function" || typeof repository?.transaction !== "function") throw new Error("repository_required");
@@ -35,6 +35,7 @@ export async function reconcileSandboxPayment({ event, stripe, repository }) {
     let decision = evaluatePaymentEvent({ signatureVerified: true, event, order: fresh });
     const sameBinding = fresh.id === snapshot.id &&
       fresh.status === snapshot.status &&
+      fresh.stripeSessionId === snapshot.stripeSessionId &&
       fresh.userId === snapshot.userId &&
       fresh.configuredPriceId === snapshot.configuredPriceId &&
       fresh.amountMinor === snapshot.amountMinor &&
