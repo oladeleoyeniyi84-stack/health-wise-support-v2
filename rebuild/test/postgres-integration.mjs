@@ -7,16 +7,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
+import { assertDisposableDatabase } from "./support/disposable-db-guard.mjs";
 import { createEventRepository } from "../src/integrations/postgres-events.mjs";
 
-const url = process.env.HEALTHWISE_TEST_DATABASE_URL;
-if (process.env.HEALTHWISE_ISOLATED_DB_ACK !== "YES_DISPOSABLE_DB" || !url) {
-  throw new Error("disposable_database_explicit_ack_required");
-}
-const parsed = new URL(url);
-if (!["postgres:", "postgresql:"].includes(parsed.protocol)) throw new Error("postgres_url_required");
-if (!/^(localhost|127\.0\.0\.1|::1)$/.test(parsed.hostname)) throw new Error("local_database_only");
-if (parsed.pathname !== "/healthwise_disposable" || parsed.search || parsed.hash || parsed.username !== "healthwise_test") throw new Error("dedicated_disposable_database_required");
+const url = assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const pool = new Pool({ connectionString: url, max: 2, connectionTimeoutMillis: 3000 });
 const client = await pool.connect();
 try {
