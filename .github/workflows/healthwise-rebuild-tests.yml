@@ -63,6 +63,40 @@ jobs:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
           HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
         run: node test/postgres-concurrency.mjs
+  disposable-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: healthwise_test
+          POSTGRES_PASSWORD: disposable_ci_only
+          POSTGRES_DB: healthwise_disposable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U healthwise_test -d healthwise_disposable"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client utilities
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Create second disposable restore database
+        env:
+          PGPASSWORD: disposable_ci_only
+        run: createdb -h 127.0.0.1 -p 5432 -U healthwise_test healthwise_restore_disposable
+      - name: Exercise synthetic backup and isolated restore
+        env:
+          HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
+          HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
+          HEALTHWISE_RESTORE_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_restore_disposable
+        run: bash test/disposable-backup-restore.sh
   stripe-sdk-offline:
     runs-on: ubuntu-latest
     timeout-minutes: 5
