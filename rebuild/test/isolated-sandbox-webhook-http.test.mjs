@@ -62,3 +62,22 @@ test("all isolated webhook responses suppress caching and browser embedding",asy
   }
  });
 });
+
+test("incomplete HTTP body never invokes payment reconciliation",async()=>{
+ const h=harness();
+ await withServer(h,async url=>{
+  const {request}=await import("node:http");
+  const target=new URL(url);
+  await new Promise((resolve,reject)=>{
+   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-length":"20"}});
+   req.on("error",err=>{if(err.code==="ECONNRESET"||err.code==="EPIPE")resolve();else reject(err);});
+   req.on("response",res=>{res.resume();res.on("end",resolve);});
+   req.flushHeaders();
+   req.write("partial");
+   req.destroy();
+   resolve();
+  });
+  await new Promise(resolve=>setTimeout(resolve,30));
+ });
+ assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
+});
