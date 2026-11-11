@@ -55,6 +55,19 @@ try {
   await client.query("UPDATE consultation_orders SET status = 'paid' WHERE id = $1 AND status = 'pending'", [order]);
   const transition = await client.query("UPDATE consultation_orders SET status = 'paid' WHERE id = $1 AND status = 'pending'", [order]);
   assert.equal(transition.rowCount, 0);
+  // Simulate a failed reconciliation transaction and verify that the event ID
+  // remains available for a later retry. The surrounding test still rolls back.
+  await client.query("SAVEPOINT failed_reconciliation");
+  await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_retry','checkout.session.completed','received')");
+  await client.query("ROLLBACK TO SAVEPOINT failed_reconciliation");
+  await client.query("RELEASE SAVEPOINT failed_reconciliation");
+  const afterFailure = await client.query("SELECT count(*)::int AS n FROM provider_events WHERE provider_event_id = 'evt_retry'");
+  assert.equal(afterFailure.rows[0].n, 0);
+  const retryInsert = await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_retry','checkout.session.completed','received') ON CONFLICT(provider_event_id) DO NOTHING RETURNING provider_event_id");
+  assert.equal(retryInsert.rowCount, 1);
+  const repeatedRetry = await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_retry','checkout.session.completed','received') ON CONFLICT(provider_event_id) DO NOTHING RETURNING provider_event_id");
+  assert.equal(repeatedRetry.rowCount, 0);
+  console.log("PASS: rollback releases webhook event ID for retry; successful retry deduplicates replay");
   console.log("PASS: isolated migration, price binding, event deduplication, session uniqueness, locked lookup and guarded status transition");
 } finally {
   await client.query("ROLLBACK").catch(()=>{});
