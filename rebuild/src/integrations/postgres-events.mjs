@@ -5,8 +5,23 @@
  * entitlement in production; this adapter is engineering-only.
  */
 export function createEventRepository(pool) {
-  if (!pool || typeof pool.connect !== "function") throw new Error("pool_required");
+  if (!pool || typeof pool.connect !== "function" || typeof pool.query !== "function") throw new Error("pool_required");
   return {
+    async findOrderBySession(sessionId) {
+      if (typeof sessionId !== "string" || !/^cs_test_[A-Za-z0-9]+$/.test(sessionId)) throw new Error("invalid_test_session");
+      const result = await pool.query(
+        "SELECT o.id, o.account_id, a.provider_subject, o.stripe_session_id, o.status, o.amount_minor, o.currency, o.consultation_key, o.configured_price_id FROM consultation_orders o JOIN accounts a ON a.id = o.account_id WHERE o.stripe_session_id = $1",
+        [sessionId]
+      );
+      const row = result.rows[0];
+      return row ? {
+        id: String(row.id), userId: row.provider_subject,
+        stripeSessionId: row.stripe_session_id, status: row.status,
+        amountMinor: Number(row.amount_minor), currency: row.currency,
+        consultationKey: row.consultation_key, configuredPriceId: row.configured_price_id,
+        accountId: String(row.account_id)
+      } : null;
+    },
     async transaction(work) {
       const client = await pool.connect();
       let begun = false;
