@@ -41,7 +41,7 @@ test("missing signature, wrong method, oversized declared body and unknown route
  await withServer(h,async url=>{
   assert.equal((await fetch(url,{method:"GET"})).status,405);
   assert.equal((await fetch(url,{method:"POST",body:"signed-raw"})).status,400);
-  assert.equal((await fetch(url,{method:"POST",headers:{"stripe-signature":"valid","content-length":"262145"},body:"signed-raw"})).status,413);
+  assert.equal((await fetch(url,{method:"POST",headers:{"stripe-signature":"valid"},body:"x".repeat(262145)})).status,413);
   assert.equal((await fetch(url.replace("/sandbox/webhook","/api/checkout"))).status,404);
  });
  assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
