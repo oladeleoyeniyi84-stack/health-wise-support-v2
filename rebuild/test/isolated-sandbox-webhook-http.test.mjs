@@ -50,3 +50,15 @@ test("preview server does not import isolated webhook harness",async()=>{
  const source=await readFile(new URL("../src/server.mjs",import.meta.url),"utf8");
  assert.doesNotMatch(source,/isolated-sandbox-webhook/);
 });
+
+test("all isolated webhook responses suppress caching and browser embedding",async()=>{
+ const h=harness({invalidSignature:true});
+ await withServer(h,async url=>{
+  for(const response of [await post(url),await fetch(url,{method:"GET"})]){
+   assert.equal(response.headers.get("cache-control"),"no-store");
+   assert.equal(response.headers.get("x-content-type-options"),"nosniff");
+   assert.equal(response.headers.get("referrer-policy"),"no-referrer");
+   assert.match(response.headers.get("content-security-policy")||"",/frame-ancestors 'none'/);
+  }
+ });
+});
