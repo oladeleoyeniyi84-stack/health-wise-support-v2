@@ -16,6 +16,7 @@ if (process.env.HEALTHWISE_ISOLATED_DB_ACK !== "YES_DISPOSABLE_DB" || !url) {
 const parsed = new URL(url);
 if (!["postgres:", "postgresql:"].includes(parsed.protocol)) throw new Error("postgres_url_required");
 if (!/^(localhost|127\.0\.0\.1|::1)$/.test(parsed.hostname)) throw new Error("local_database_only");
+if (parsed.pathname !== "/healthwise_disposable" || parsed.search || parsed.hash || parsed.username !== "healthwise_test") throw new Error("dedicated_disposable_database_required");
 const pool = new Pool({ connectionString: url, max: 2, connectionTimeoutMillis: 3000 });
 const client = await pool.connect();
 try {
