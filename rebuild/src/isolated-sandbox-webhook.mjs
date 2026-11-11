@@ -27,7 +27,7 @@ export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSe
     (async()=>{
      for await(const chunk of req){
     size+=chunk.length;
-    if(size>MAX_BODY_BYTES)return reply(res,413,{error:"payload_too_large"});
+    if(size>MAX_BODY_BYTES)throw new Error("payload_too_large");
      chunks.push(chunk);
      }
      if(!req.complete)throw new Error("incomplete_request");
@@ -39,7 +39,8 @@ export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSe
    const result=await processSignedSandboxReconciliation({rawBody:body,signature,endpointSecret,stripe,repository});
    return reply(res,200,{action:result.action});
   }catch(err){
-   if(res.destroyed)return;
+   if(res.destroyed||res.writableEnded)return;
+   if(err?.message==="payload_too_large")return reply(res,413,{error:"payload_too_large"});
    if(err?.message==="body_timeout")return reply(res,408,{error:"request_timeout"});
    if(err?.message==="incomplete_request"||err?.code==="ECONNRESET")return reply(res,400,{error:"incomplete_request"});
    const code=err?.message;
