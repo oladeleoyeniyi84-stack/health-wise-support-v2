@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { processSignedSandboxReconciliation } from "./integrations/signed-reconciliation.mjs";
 
 const MAX_BODY_BYTES=262144;
+const BODY_TIMEOUT_MS=5000;
 const reply=(res,status,payload)=>{res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; frame-ancestors 'none'","Referrer-Policy":"no-referrer"});res.end(JSON.stringify(payload));};
 
 /**
@@ -20,22 +21,33 @@ export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSe
   const declared=Number(req.headers["content-length"]);
   if(req.headers["content-length"]!==undefined&&(!Number.isSafeInteger(declared)||declared<0||declared>MAX_BODY_BYTES))return reply(res,413,{error:"payload_too_large"});
   let chunks=[],size=0;
+  let timer;
   try{
-   for await(const chunk of req){
+   const body=await Promise.race([
+    (async()=>{
+     for await(const chunk of req){
     size+=chunk.length;
     if(size>MAX_BODY_BYTES)return reply(res,413,{error:"payload_too_large"});
-    chunks.push(chunk);
-   }
-   const result=await processSignedSandboxReconciliation({rawBody:Buffer.concat(chunks),signature,endpointSecret,stripe,repository});
+     chunks.push(chunk);
+     }
+     if(!req.complete)throw new Error("incomplete_request");
+     return Buffer.concat(chunks);
+    })(),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("body_timeout")),BODY_TIMEOUT_MS);})
+   ]);
+   clearTimeout(timer);
+   const result=await processSignedSandboxReconciliation({rawBody:body,signature,endpointSecret,stripe,repository});
    return reply(res,200,{action:result.action});
   }catch(err){
    if(res.destroyed)return;
+   if(err?.message==="body_timeout")return reply(res,408,{error:"request_timeout"});
+   if(err?.message==="incomplete_request"||err?.code==="ECONNRESET")return reply(res,400,{error:"incomplete_request"});
    const code=err?.message;
    if(code==="invalid_raw_body")return reply(res,400,{error:"invalid_raw_body"});
    if(code==="invalid_webhook_signature"||code==="sandbox_event_required"||code==="sandbox_session_required")return reply(res,400,{error:"invalid_event"});
    if(code==="webhook_configuration_required"||code==="stripe_verifier_required"||code==="repository_required"||code==="stripe_lookup_required"||code==="transaction_contract_required"||code==="deduplication_unavailable")return reply(res,503,{error:"service_unavailable"});
    if(code==="stripe_lookup_retryable"||code==="stripe_response_retryable")return reply(res,503,{error:"retryable_provider_failure"});
    return reply(res,503,{error:"reconciliation_unavailable"});
-  }
+  }finally{clearTimeout(timer);}
  });
 }
