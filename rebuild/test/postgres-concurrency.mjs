@@ -104,6 +104,21 @@ try {
     assert.deepEqual(rollbackCounts.rows[0],{events:0,entitlements:0,status:"pending"});
     console.log("PASS: actual PostgreSQL rollback removes event, paid transition and entitlement together");
 
+    // Redelivery after a rolled-back transaction must safely process the
+    // original event ID, then deduplicate the next delivery.
+    const recoveredEvent={...event,id:"evt_RollbackReal",data:{object:{
+      ...event.data.object,id:"cs_test_rollback",
+      metadata:{orderId:rollbackOrder,consultationKey:"quick"}
+    }}};
+    const recovered=await reconcileSandboxPayment({event:recoveredEvent,stripe,repository});
+    assert.equal(recovered.action,"mark_paid");
+    const redelivered=await reconcileSandboxPayment({event:recoveredEvent,stripe,repository});
+    assert.equal(redelivered.action,"duplicate");
+    const recoveredCounts=await scopedPool.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id='evt_RollbackReal') AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id=$1) AS entitlements, (SELECT status FROM consultation_orders WHERE id=$1) AS status",[rollbackOrder]);
+    assert.deepEqual(recoveredCounts.rows[0],{events:1,entitlements:1,status:"paid"});
+    console.log("PASS: rolled-back event redelivers once and duplicate delivery grants no extra entitlement");
+
+
 
   } finally {await scopedPool.end();}
 
