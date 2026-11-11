@@ -11,7 +11,8 @@ const reply=(res,status,payload)=>{res.writeHead(status,{"Content-Type":"applica
  * Bind to loopback only in disposable tests; no secrets or network providers
  * are instantiated by this module.
  */
-export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSecret}={}){
+export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSecret,bodyTimeoutMs=BODY_TIMEOUT_MS}={}){
+ if(!Number.isSafeInteger(bodyTimeoutMs)||bodyTimeoutMs<1||bodyTimeoutMs>BODY_TIMEOUT_MS)throw new Error("invalid_body_timeout");
  return createServer(async(req,res)=>{
   const path=new URL(req.url||"/","http://localhost").pathname;
   if(path!=="/sandbox/webhook")return reply(res,404,{error:"not_found"});
@@ -33,7 +34,7 @@ export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSe
      if(!req.complete)throw new Error("incomplete_request");
      return Buffer.concat(chunks);
     })(),
-    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("body_timeout")),BODY_TIMEOUT_MS);})
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("body_timeout")),bodyTimeoutMs);})
    ]);
    clearTimeout(timer);
    const result=await processSignedSandboxReconciliation({rawBody:body,signature,endpointSecret,stripe,repository});
