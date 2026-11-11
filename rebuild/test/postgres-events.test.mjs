@@ -8,7 +8,7 @@ function harness({ failOn } = {}) {
       calls.push({sql,values});
       if (failOn && sql.includes(failOn)) throw new Error("db_failure");
       if (sql.startsWith("INSERT INTO provider_events")) return {rowCount:1,rows:[{provider_event_id:"evt_abc"}]};
-      if (sql.startsWith("SELECT o.id")) return {rowCount:1,rows:[{id:"order_1",account_id:"account_1",provider_subject:"user_1",stripe_session_id:"cs_test_abc",status:"pending",amount_minor:1500,currency:"usd",consultation_key:"quick"}]};
+      if (sql.startsWith("SELECT o.id")) return {rowCount:1,rows:[{id:"order_1",account_id:"account_1",provider_subject:"user_1",stripe_session_id:"cs_test_abc",status:"pending",amount_minor:1500,currency:"usd",consultation_key:"quick",configured_price_id:"price_Abc123"}]};
       if (sql.startsWith("UPDATE consultation_orders SET status = 'paid'")) return {rowCount:1,rows:[{id:"order_1",account_id:"account_1"}]};
       return {rowCount:1,rows:[]};
     },
@@ -23,6 +23,7 @@ test("commits successful transaction and releases client",async()=>{
     assert.equal(await tx.recordEventOnce({eventId:"evt_abc",type:"checkout.session.completed"}),true);
     const order=await tx.lockOrderBySession("cs_test_abc");
     assert.equal(order.userId,"user_1");
+    assert.equal(order.configuredPriceId,"price_Abc123");
     await tx.applyDecision({action:"mark_paid",eventId:"evt_abc",orderId:order.id});
   });
   assert.equal(h.calls.at(-1).sql,"COMMIT");
@@ -53,7 +54,7 @@ test("SQL uses parameterized session lookup",async()=>{
 test("nonlocking order snapshot uses parameterized SQL",async()=>{
   const h=harness();
   const order=await createEventRepository(h.pool).findOrderBySession("cs_test_abc");
-  assert.equal(order.configuredPriceId,undefined);
+  assert.equal(order.configuredPriceId,"price_Abc123");
   assert.equal(order.userId,"user_1");
   const q=h.calls.find(c=>c.sql.startsWith("SELECT o.id")&&!c.sql.includes("FOR UPDATE"));
   assert.ok(q.sql.includes("$1"));
@@ -64,4 +65,14 @@ test("nonlocking snapshot rejects non-test session IDs",async()=>{
   const h=harness();
   await assert.rejects(createEventRepository(h.pool).findOrderBySession("cs_live_abc"),/invalid_test_session/);
   assert.equal(h.calls.length,0);
+});
+
+test("snapshot and locked order both return the authoritative configured price",async()=>{
+  const h=harness();
+  const repository=createEventRepository(h.pool);
+  const snapshot=await repository.findOrderBySession("cs_test_abc");
+  const locked=await repository.transaction(tx=>tx.lockOrderBySession("cs_test_abc"));
+  assert.equal(snapshot.configuredPriceId,"price_Abc123");
+  assert.equal(locked.configuredPriceId,snapshot.configuredPriceId);
+  assert.ok(h.calls.some(x=>x.sql.includes("configured_price_id")&&x.sql.includes("FOR UPDATE OF o")));
 });
