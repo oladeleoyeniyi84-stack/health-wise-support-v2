@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { processSignedSandboxReconciliation } from "./integrations/signed-reconciliation.mjs";
 
 const MAX_BODY_BYTES=262144;
-const reply=(res,status,payload)=>{res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"});res.end(JSON.stringify(payload));};
+const reply=(res,status,payload)=>{res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Content-Security-Policy":"default-src 'none'; frame-ancestors 'none'","Referrer-Policy":"no-referrer"});res.end(JSON.stringify(payload));};
 
 /**
  * Engineering-only isolated webhook harness. Never imported or mounted by
