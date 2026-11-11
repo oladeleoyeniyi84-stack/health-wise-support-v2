@@ -79,6 +79,20 @@ try {
     const verified=await scopedPool.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id='evt_Repository123') AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id=$1) AS entitlements, (SELECT status FROM consultation_orders WHERE id=$1) AS status",[order2]);
     assert.deepEqual(verified.rows[0],{events:1,entitlements:1,status:"paid"});
     console.log("PASS: actual repository reconciliation concurrently processes one payment, one duplicate and one entitlement");
+    // Two distinct Stripe event IDs may describe the same paid Checkout
+    // session. The order must still transition and grant entitlement once.
+    const order3="44444444-4444-4444-8444-444444444444";
+    await scopedPool.query("INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id) VALUES($1,$2,'quick','price_Abc123','usd',1500,'cs_test_distinct')",[order3,"11111111-1111-4111-8111-111111111111"]);
+    const base={...event,data:{object:{...event.data.object,id:"cs_test_distinct",metadata:{orderId:order3,consultationKey:"quick"}}}};
+    const distinct=await Promise.all([
+      reconcileSandboxPayment({event:{...base,id:"evt_DistinctA"},stripe,repository}),
+      reconcileSandboxPayment({event:{...base,id:"evt_DistinctB"},stripe,repository})
+    ]);
+    assert.deepEqual(distinct.map(x=>x.action).sort(),["ignore","mark_paid"]);
+    const distinctCounts=await scopedPool.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id IN ('evt_DistinctA','evt_DistinctB')) AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id=$1) AS entitlements, (SELECT status FROM consultation_orders WHERE id=$1) AS status",[order3]);
+    assert.deepEqual(distinctCounts.rows[0],{events:2,entitlements:1,status:"paid"});
+    console.log("PASS: two distinct event IDs for one session produce one paid transition and one entitlement");
+
   } finally {await scopedPool.end();}
 
 } finally {
