@@ -91,3 +91,28 @@ test("oversized streamed chunked body fails before signature verification and re
  });
  assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
 });
+
+test("slow incomplete body times out without calling signature verifier or database",async()=>{
+ const h=harness();
+ await withServer({...h,bodyTimeoutMs:75},async url=>{
+  const {request}=await import("node:http");
+  const target=new URL(url);
+  const result=await new Promise((resolve,reject)=>{
+   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-length":"20"}},res=>{
+    let data="";res.setEncoding("utf8");res.on("data",chunk=>{data+=chunk;});
+    res.on("end",()=>resolve({status:res.statusCode,data}));
+   });
+   req.on("error",reject);
+   req.write("partial");
+  });
+  assert.equal(result.status,408);
+  assert.equal(JSON.parse(result.data).error,"request_timeout");
+ });
+ assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
+});
+test("body timeout cannot be disabled or raised beyond engineering limit",()=>{
+ const h=harness();
+ for(const bodyTimeoutMs of [0,-1,5001,NaN,1.5]){
+  assert.throws(()=>createIsolatedSandboxWebhookServer({...h,bodyTimeoutMs}),/invalid_body_timeout/);
+ }
+});
