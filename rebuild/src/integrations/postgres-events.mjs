@@ -23,7 +23,7 @@ export function createEventRepository(pool) {
           },
           async lockOrderBySession(sessionId) {
             const result = await client.query(
-              "SELECT o.id, o.account_id, a.provider_subject, o.stripe_session_id, o.status, o.amount_minor, o.currency, o.consultation_key FROM consultation_orders o JOIN accounts a ON a.id = o.account_id WHERE o.stripe_session_id = $1 FOR UPDATE OF o",
+              "SELECT o.id, o.account_id, a.provider_subject, o.stripe_session_id, o.status, o.amount_minor, o.currency, o.consultation_key, o.configured_price_id FROM consultation_orders o JOIN accounts a ON a.id = o.account_id WHERE o.stripe_session_id = $1 FOR UPDATE OF o",
               [sessionId]
             );
             const row = result.rows[0];
@@ -32,7 +32,7 @@ export function createEventRepository(pool) {
               id: String(row.id), userId: row.provider_subject,
               stripeSessionId: row.stripe_session_id, status: row.status,
               amountMinor: Number(row.amount_minor), currency: row.currency,
-              consultationKey: row.consultation_key, accountId: String(row.account_id)
+              consultationKey: row.consultation_key, configuredPriceId: row.configured_price_id, accountId: String(row.account_id)
             };
           },
           async applyDecision({ action, eventId, orderId }) {
