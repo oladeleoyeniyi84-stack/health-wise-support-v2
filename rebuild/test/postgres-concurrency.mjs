@@ -91,6 +91,20 @@ try {
     assert.deepEqual(distinctCounts.rows[0],{events:2,entitlements:1,status:"paid"});
     console.log("PASS: two distinct event IDs for one session produce one paid transition and one entitlement");
 
+    // Real PostgreSQL rollback: an inserted event and an order transition
+    // must both disappear when the transaction fails before commit.
+    const rollbackOrder="55555555-5555-4555-8555-555555555555";
+    await scopedPool.query("INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id) VALUES($1,$2,'quick','price_Abc123','usd',1500,'cs_test_rollback')",[rollbackOrder,"11111111-1111-4111-8111-111111111111"]);
+    await assert.rejects(repository.transaction(async tx=>{
+      assert.equal(await tx.recordEventOnce({eventId:"evt_RollbackReal",type:"checkout.session.completed"}),true);
+      await tx.applyDecision({action:"mark_paid",eventId:"evt_RollbackReal",orderId:rollbackOrder});
+      throw new Error("simulated_failure_before_commit");
+    }),/simulated_failure_before_commit/);
+    const rollbackCounts=await scopedPool.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id='evt_RollbackReal') AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id=$1) AS entitlements, (SELECT status FROM consultation_orders WHERE id=$1) AS status",[rollbackOrder]);
+    assert.deepEqual(rollbackCounts.rows[0],{events:0,entitlements:0,status:"pending"});
+    console.log("PASS: actual PostgreSQL rollback removes event, paid transition and entitlement together");
+
+
   } finally {await scopedPool.end();}
 
 } finally {
