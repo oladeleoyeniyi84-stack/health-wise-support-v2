@@ -12,28 +12,19 @@ trap 'rm -rf "$tmpdir"' EXIT
 src="$HEALTHWISE_TEST_DATABASE_URL"
 dst="$HEALTHWISE_RESTORE_DATABASE_URL"
 # The CI service starts with fresh databases. Create isolated schema and fixture.
+psql "$src" -v ON_ERROR_STOP=1 -c 'CREATE SCHEMA hw_recovery_fixture'
+# Apply the actual design migration in a dedicated schema, not a substitute fixture schema.
+sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' rebuild/db/001_foundation.sql > "$tmpdir/migration.sql"
+{ printf 'SET search_path TO hw_recovery_fixture, public;\\n'; cat "$tmpdir/migration.sql"; } | psql "$src" -v ON_ERROR_STOP=1
 psql "$src" -v ON_ERROR_STOP=1 <<'SQL'
-CREATE SCHEMA hw_recovery_fixture;
 SET search_path TO hw_recovery_fixture, public;
-CREATE TABLE accounts (id uuid PRIMARY KEY, provider_subject text NOT NULL UNIQUE);
-CREATE TABLE consultation_orders (
-  id uuid PRIMARY KEY,
-  account_id uuid NOT NULL REFERENCES accounts(id),
-  status text NOT NULL CHECK(status IN ('pending','paid','manual_review','refunded')),
-  stripe_session_id text UNIQUE
-);
-CREATE TABLE provider_events (
-  provider_event_id text PRIMARY KEY,
-  order_id uuid NOT NULL REFERENCES consultation_orders(id)
-);
-CREATE TABLE booking_entitlements (
-  id uuid PRIMARY KEY,
-  order_id uuid NOT NULL UNIQUE REFERENCES consultation_orders(id)
-);
-INSERT INTO accounts VALUES ('00000000-0000-4000-8000-000000000001','synthetic-recovery');
-INSERT INTO consultation_orders VALUES ('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','paid','cs_test_Recovery');
-INSERT INTO provider_events VALUES ('evt_Recovery','00000000-0000-4000-8000-000000000002');
-INSERT INTO booking_entitlements VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002');
+INSERT INTO accounts(id,provider_subject) VALUES ('00000000-0000-4000-8000-000000000001','synthetic-recovery');
+INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id,status)
+ VALUES ('00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','quick','price_Recovery','usd',1500,'cs_test_Recovery','paid');
+INSERT INTO provider_events(provider_event_id,event_type,outcome,order_id)
+ VALUES ('evt_Recovery','checkout.session.completed','mark_paid','00000000-0000-4000-8000-000000000002');
+INSERT INTO booking_entitlements(id,order_id,account_id,state)
+ VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','ready');
 SQL
 pg_dump "$src" --format=custom --schema=hw_recovery_fixture --file="$tmpdir/recovery.dump"
 pg_restore --dbname="$dst" --exit-on-error --no-owner --no-privileges "$tmpdir/recovery.dump"
@@ -52,12 +43,12 @@ END $$;
 DO $$
 BEGIN
   BEGIN
-    INSERT INTO booking_entitlements VALUES ('00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000002');
+    INSERT INTO booking_entitlements(id,order_id,account_id) VALUES ('00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001');
     RAISE EXCEPTION 'duplicate entitlement unexpectedly accepted';
   EXCEPTION WHEN unique_violation THEN NULL;
   END;
   BEGIN
-    INSERT INTO provider_events VALUES ('evt_BadForeignKey','00000000-0000-4000-8000-000000000099');
+    INSERT INTO provider_events(provider_event_id,event_type,outcome,order_id) VALUES ('evt_BadForeignKey','test','ignore','00000000-0000-4000-8000-000000000099');
     RAISE EXCEPTION 'invalid foreign key unexpectedly accepted';
   EXCEPTION WHEN foreign_key_violation THEN NULL;
   END;
