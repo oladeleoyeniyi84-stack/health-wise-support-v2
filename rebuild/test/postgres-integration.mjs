@@ -41,6 +41,12 @@ try {
   await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_abc','checkout.session.completed','received')");
   const duplicate = await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_abc','checkout.session.completed','received') ON CONFLICT(provider_event_id) DO NOTHING RETURNING provider_event_id");
   assert.equal(duplicate.rowCount, 0);
+  await assert.rejects(
+    client.query("INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id) VALUES(gen_random_uuid(),$1,'quick','price_Abc123','usd',1500,'cs_test_abc')", [account]),
+    /duplicate key/
+  );
+  // PostgreSQL aborts the transaction after a constraint violation. The
+  // outer finally block rolls it back; do not continue querying this client.
   console.log("PASS: isolated migration, order snapshot, price binding, event deduplication");
 } finally {
   await client.query("ROLLBACK").catch(()=>{});
