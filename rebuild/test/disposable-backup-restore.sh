@@ -26,8 +26,8 @@ INSERT INTO provider_events(provider_event_id,event_type,outcome,order_id)
 INSERT INTO booking_entitlements(id,order_id,account_id,state)
  VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','ready');
 SQL
-pg_dump "$src" --format=custom --schema=hw_recovery_fixture --file="$tmpdir/recovery.dump"
-pg_restore --dbname="$dst" --exit-on-error --no-owner --no-privileges "$tmpdir/recovery.dump"
+docker run --rm --network host -v "$tmpdir:/backup" postgres:16-alpine pg_dump "$src" --format=custom --schema=hw_recovery_fixture --file=/backup/recovery.dump
+docker run --rm --network host -v "$tmpdir:/backup:ro" postgres:16-alpine pg_restore --dbname="$dst" --exit-on-error --no-owner --no-privileges /backup/recovery.dump
 psql "$dst" -v ON_ERROR_STOP=1 <<'SQL'
 SET search_path TO hw_recovery_fixture, public;
 DO $$
