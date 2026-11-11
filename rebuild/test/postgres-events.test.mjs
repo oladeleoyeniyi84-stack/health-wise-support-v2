@@ -14,7 +14,7 @@ function harness({ failOn } = {}) {
     },
     release:()=>{released++;}
   };
-  return {pool:{connect:async()=>client},calls,get released(){return released;}};
+  return {pool:{connect:async()=>client,query:client.query},calls,get released(){return released;}};
 }
 test("rejects missing pool",()=>assert.throws(()=>createEventRepository(),/pool_required/));
 test("commits successful transaction and releases client",async()=>{
@@ -48,4 +48,20 @@ test("SQL uses parameterized session lookup",async()=>{
   const q=h.calls.find(c=>c.sql.startsWith("SELECT o.id"));
   assert.ok(q.sql.includes("$1"));
   assert.deepEqual(q.values,["cs_test_abc"]);
+});
+
+test("nonlocking order snapshot uses parameterized SQL",async()=>{
+  const h=harness();
+  const order=await createEventRepository(h.pool).findOrderBySession("cs_test_abc");
+  assert.equal(order.configuredPriceId,undefined);
+  assert.equal(order.userId,"user_1");
+  const q=h.calls.find(c=>c.sql.startsWith("SELECT o.id")&&!c.sql.includes("FOR UPDATE"));
+  assert.ok(q.sql.includes("$1"));
+  assert.deepEqual(q.values,["cs_test_abc"]);
+  assert.equal(h.calls.some(c=>c.sql==="BEGIN"),false);
+});
+test("nonlocking snapshot rejects non-test session IDs",async()=>{
+  const h=harness();
+  await assert.rejects(createEventRepository(h.pool).findOrderBySession("cs_live_abc"),/invalid_test_session/);
+  assert.equal(h.calls.length,0);
 });
