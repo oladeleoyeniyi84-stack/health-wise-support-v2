@@ -15,11 +15,20 @@ export async function reconcileSandboxPayment({ event, stripe, repository }) {
   if (typeof repository?.findOrderBySession !== "function" || typeof repository?.transaction !== "function") throw new Error("repository_required");
   const snapshot = await repository.findOrderBySession(session.id);
   if (!snapshot) throw new Error("unknown_order");
+  // Transport/SDK failures must remain retryable: do not consume the event ID
+  // or change order status when Stripe cannot be consulted.
+  if (typeof stripe?.checkout?.sessions?.listLineItems !== "function") throw new Error("stripe_lookup_required");
+  let response;
+  try {
+    response = await stripe.checkout.sessions.listLineItems(session.id, { limit: 2, expand: ["data.price"] });
+  } catch {
+    throw new Error("stripe_lookup_retryable");
+  }
+  // A complete but inconsistent provider response is a review case.
+  // An incomplete response may be transient, so do not consume the event.
+  if (!response || response.has_more !== false || !Array.isArray(response.data)) throw new Error("stripe_response_retryable");
   let verified = false;
   try {
-    if (typeof stripe?.checkout?.sessions?.listLineItems !== "function") throw new Error("stripe_lookup_required");
-    const response = await stripe.checkout.sessions.listLineItems(session.id, { limit: 2, expand: ["data.price"] });
-    if (!response || response.has_more !== false) throw new Error("incomplete_items");
     verifyCheckoutLineItems({ session, lineItems: response.data, order: snapshot });
     verified = true;
   } catch {
