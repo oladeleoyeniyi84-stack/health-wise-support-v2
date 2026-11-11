@@ -5,6 +5,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
+import { createEventRepository } from "../src/integrations/postgres-events.mjs";
+import { reconcileSandboxPayment } from "../src/integrations/payment-reconciliation.mjs";
 
 const url = process.env.HEALTHWISE_TEST_DATABASE_URL;
 if (process.env.HEALTHWISE_ISOLATED_DB_ACK !== "YES_DISPOSABLE_DB" || !url) throw new Error("disposable_database_explicit_ack_required");
@@ -53,6 +55,32 @@ try {
   const counts=await first.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id='evt_concurrent') AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id='22222222-2222-4222-8222-222222222222') AS entitlements");
   assert.deepEqual(counts.rows[0],{events:1,entitlements:1});
   console.log("PASS: two PostgreSQL connections serialize duplicate delivery; one event, one entitlement");
+  // Exercise the actual repository and reconciliation functions concurrently,
+  // rather than only duplicating their SQL manually.
+  const order2 = "33333333-3333-4333-8333-333333333333";
+  await first.query("INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id) VALUES($1,$2,'quick','price_Abc123','usd',1500,'cs_test_repository')",[order2,"11111111-1111-4111-8111-111111111111"]);
+  // pg's startup options apply to all pooled connections, including snapshots.
+  const scopedPool = new Pool({connectionString:url,max:4,connectionTimeoutMillis:3000,options:"-c search_path="+schema});
+  try {
+    const repository=createEventRepository(scopedPool);
+    const event={id:"evt_Repository123",livemode:false,type:"checkout.session.completed",data:{object:{
+      id:"cs_test_repository",livemode:false,mode:"payment",payment_status:"paid",
+      client_reference_id:"user_1",amount_total:1500,currency:"usd",
+      metadata:{orderId:order2,consultationKey:"quick"}
+    }}};
+    const stripe={checkout:{sessions:{listLineItems:async()=>({
+      has_more:false,data:[{quantity:1,amount_total:1500,price:{id:"price_Abc123",active:true,currency:"usd"}}]
+    })}}};
+    const outcomes=await Promise.all([
+      reconcileSandboxPayment({event,stripe,repository}),
+      reconcileSandboxPayment({event,stripe,repository})
+    ]);
+    assert.deepEqual(outcomes.map(x=>x.action).sort(),["duplicate","mark_paid"]);
+    const verified=await scopedPool.query("SELECT (SELECT count(*)::int FROM provider_events WHERE provider_event_id='evt_Repository123') AS events, (SELECT count(*)::int FROM booking_entitlements WHERE order_id=$1) AS entitlements, (SELECT status FROM consultation_orders WHERE id=$1) AS status",[order2]);
+    assert.deepEqual(verified.rows[0],{events:1,entitlements:1,status:"paid"});
+    console.log("PASS: actual repository reconciliation concurrently processes one payment, one duplicate and one entitlement");
+  } finally {await scopedPool.end();}
+
 } finally {
   for(const client of [first,second]){
     if(client){
