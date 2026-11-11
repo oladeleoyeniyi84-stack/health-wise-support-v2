@@ -8,7 +8,8 @@ import { verifyCheckoutLineItems } from "./stripe-line-items.mjs";
  *
  * This is NOT connected to an HTTP route and must not be used for production.
  */
-export async function reconcileSandboxPayment({ event, stripe, repository }) {
+export async function reconcileSandboxPayment({ event, stripe, repository, providerTimeoutMs = 10000 }) {
+  if (!Number.isSafeInteger(providerTimeoutMs) || providerTimeoutMs < 1 || providerTimeoutMs > 10000) throw new Error("invalid_provider_timeout");
   if (!event || event.livemode !== false || !/^evt_[A-Za-z0-9]+$/.test(event.id ?? "") || event.type !== "checkout.session.completed") throw new Error("sandbox_event_required");
   const session = event.data?.object;
   if (!session || !/^cs_test_[A-Za-z0-9]+$/.test(session.id ?? "")) throw new Error("sandbox_session_required");
@@ -19,10 +20,16 @@ export async function reconcileSandboxPayment({ event, stripe, repository }) {
   // or change order status when Stripe cannot be consulted.
   if (typeof stripe?.checkout?.sessions?.listLineItems !== "function") throw new Error("stripe_lookup_required");
   let response;
+  let providerTimer;
   try {
-    response = await stripe.checkout.sessions.listLineItems(session.id, { limit: 2, expand: ["data.price"] });
+    response = await Promise.race([
+      stripe.checkout.sessions.listLineItems(session.id, { limit: 2, expand: ["data.price"] }),
+      new Promise((_, reject) => { providerTimer = setTimeout(() => reject(new Error("provider_timeout")), providerTimeoutMs); })
+    ]);
   } catch {
     throw new Error("stripe_lookup_retryable");
+  } finally {
+    clearTimeout(providerTimer);
   }
   // A complete but inconsistent provider response is a review case.
   // An incomplete response may be transient, so do not consume the event.
