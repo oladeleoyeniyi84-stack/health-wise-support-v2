@@ -12,6 +12,7 @@ const url = process.env.HEALTHWISE_TEST_DATABASE_URL;
 if (process.env.HEALTHWISE_ISOLATED_DB_ACK !== "YES_DISPOSABLE_DB" || !url) throw new Error("disposable_database_explicit_ack_required");
 const parsed = new URL(url);
 if (!["postgres:", "postgresql:"].includes(parsed.protocol) || !["localhost", "127.0.0.1", "::1"].includes(parsed.hostname)) throw new Error("local_database_only");
+if (parsed.pathname !== "/healthwise_disposable" || parsed.search || parsed.hash || parsed.username !== "healthwise_test") throw new Error("dedicated_disposable_database_required");
 const pool = new Pool({connectionString:url,max:3,connectionTimeoutMillis:3000});
 const schema = "hw_concurrency_" + process.pid;
 let first, second;
