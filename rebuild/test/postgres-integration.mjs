@@ -41,13 +41,21 @@ try {
   await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_abc','checkout.session.completed','received')");
   const duplicate = await client.query("INSERT INTO provider_events(provider_event_id,event_type,outcome) VALUES('evt_abc','checkout.session.completed','received') ON CONFLICT(provider_event_id) DO NOTHING RETURNING provider_event_id");
   assert.equal(duplicate.rowCount, 0);
+  // Savepoint permits checking constraint rejection without poisoning the
+  // outer rollback-only test transaction.
+  await client.query("SAVEPOINT before_duplicate_session");
   await assert.rejects(
     client.query("INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor,stripe_session_id) VALUES(gen_random_uuid(),$1,'quick','price_Abc123','usd',1500,'cs_test_abc')", [account]),
     /duplicate key/
   );
-  // PostgreSQL aborts the transaction after a constraint violation. The
-  // outer finally block rolls it back; do not continue querying this client.
-  console.log("PASS: isolated migration, order snapshot, price binding, event deduplication");
+  await client.query("ROLLBACK TO SAVEPOINT before_duplicate_session");
+  await client.query("RELEASE SAVEPOINT before_duplicate_session");
+  const locked = await client.query("SELECT o.id, o.configured_price_id FROM consultation_orders o WHERE o.stripe_session_id = $1 FOR UPDATE OF o", ["cs_test_abc"]);
+  assert.equal(locked.rows[0].configured_price_id, "price_Abc123");
+  await client.query("UPDATE consultation_orders SET status = 'paid' WHERE id = $1 AND status = 'pending'", [order]);
+  const transition = await client.query("UPDATE consultation_orders SET status = 'paid' WHERE id = $1 AND status = 'pending'", [order]);
+  assert.equal(transition.rowCount, 0);
+  console.log("PASS: isolated migration, price binding, event deduplication, session uniqueness, locked lookup and guarded status transition");
 } finally {
   await client.query("ROLLBACK").catch(()=>{});
   client.release();
