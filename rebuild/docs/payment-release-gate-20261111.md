@@ -2,8 +2,13 @@
 
 **Engineering Vault: NO-GO.** Development branch only. No production merge, payment activation, or database migration is authorized by this document.
 
-## Verified in GitHub Actions run #114 (commit 2fda10c5)
-- 102 dependency-free unit tests passed (0 failed); all four jobs succeeded.
+## Verified in GitHub Actions runs #114 and #43082194864 (commit bdfa0300)
+- Latest GitHub Actions run 43082194864 completed successfully across all four jobs: unit, postgres-integration, stripe-sdk-offline, and disposable-restore.
+- Founder-provided Windows PowerShell output on 2026-11-12 shows local PostgreSQL 16.16 integration and concurrency scripts passed (2/2, 0 failures) against `healthwise_disposable` as `healthwise_test` at `127.0.0.1`. The tests reported transaction rollback, webhook retry/deduplication, and single-entitlement concurrency behavior. This is screenshot-reported local evidence, not an independently accessed local database.
+- Founder-provided local unit test output reported 117/117 passing tests. Do not confuse this with the earlier 102-test CI baseline.
+- The isolated engineering-only HTTP webhook harness and additional fail-closed regression tests exist on the rebuild branch; they are not mounted on the preview server.
+
+- 102 dependency-free unit tests passed (0 failed) in run #114; all four jobs succeeded at that checkpoint.
 - PostgreSQL 16 disposable integration passed: migration, uniqueness, rollback/retry, guarded payment transition, duplicate webhook concurrency using the actual repository adapter.
 - Official Stripe SDK offline signature test passed: signed synthetic event, payload tampering rejection, invalid signature rejection, and simulated provider outage followed by retry.
 - Two distinct webhook event IDs for the same Checkout session resulted in one paid transition and one booking entitlement.
@@ -12,7 +17,7 @@
 
 ## Unverified / blocking
 1. **Real Stripe test-mode API:** No authenticated checkout creation, retrieved session, line-item API response, or provider-delivered webhook has been tested against Stripe. The SDK tests use synthetic signed events and stubbed API calls.
-2. **Production-grade webhook route:** The preferred `signed-reconciliation.mjs` is not mounted on an HTTP route. Confirm raw-byte body handling, signature header, request-size cap, non-2xx retry responses, timeouts, and observability before enabling any route.
+2. **Production-grade webhook route:** The preferred `signed-reconciliation.mjs` is not mounted on the public preview server. An isolated, unmounted HTTP sandbox harness has regression tests for raw bytes, signature, size limits and retry responses. Production-grade routing, deployment configuration, timeouts, and observability remain unverified.
 3. **Legacy webhook migration:** The former in-transaction provider lookup implementation was retired. `src/integrations/stripe-webhook.mjs` now delegates to the preferred short-transaction signed path. The migration is covered by offline tests but remains **unverified with authenticated Stripe sandbox calls and an HTTP endpoint**.
 4. **Provider credentials:** Test credentials must be provided only through a protected secret store, never committed to GitHub, logged, or copied into chat. Confirm a verified `sk_test_` credential and dedicated `whsec_` test endpoint before optional authenticated sandbox checks.
 5. **Checkout persistence:** Confirm test-mode Checkout session creation, idempotency, order/session binding, and recoverability after partial failure.
