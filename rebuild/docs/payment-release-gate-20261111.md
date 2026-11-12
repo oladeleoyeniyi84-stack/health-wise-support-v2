@@ -15,6 +15,11 @@
 - Synthetic disposable PostgreSQL 16 backup and isolated restore passed, preserving rows, uniqueness constraints, and foreign keys. This is **not** a production recovery test.
 - Legacy webhook module delegates to the preferred signed short-transaction reconciliation path; tests cover provider-outage retry and idempotent redelivery.
 
+## Protected Stripe readiness preparation (not executed)
+- Added `.github/workflows/healthwise-stripe-protected-readiness.yml` with manual dispatch, exact acknowledgement, read-only repository permission, a dedicated `healthwise-stripe-testmode` environment, and format-only checks for two protected secrets. It does not invoke Stripe or create a Checkout session.
+- **Not verified:** GitHub environment creation, required reviewers/branch restrictions, secret provisioning, or a successful run. Environment declarations in workflow YAML alone do not prove approval controls are configured; do not run until those controls and founder consent are verified.
+- Expected environment secrets: `HEALTHWISE_STRIPE_TEST_SECRET_KEY` (`sk_test_...`) and `HEALTHWISE_STRIPE_TEST_WEBHOOK_SECRET` (`whsec_...`). Never enter values in chat, commits, or logs.
+
 ## Unverified / blocking
 1. **Real Stripe test-mode API:** No authenticated checkout creation, retrieved session, line-item API response, or provider-delivered webhook has been tested against Stripe. The SDK tests use synthetic signed events and stubbed API calls.
 2. **Production-grade webhook route:** The preferred `signed-reconciliation.mjs` is not mounted on the public preview server. An isolated, unmounted HTTP sandbox harness has regression tests for raw bytes, signature, size limits and retry responses. Production-grade routing, deployment configuration, timeouts, and observability remain unverified.
