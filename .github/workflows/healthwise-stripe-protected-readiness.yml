@@ -1,0 +1,38 @@
+name: Healthwise Stripe Protected Test-Mode Readiness
+# No automatic triggers. This workflow is deliberately an OFFLINE readiness check:
+# no Stripe SDK network calls, Checkout sessions, or webhook endpoint registration.
+on:
+  workflow_dispatch:
+    inputs:
+      acknowledgement:
+        description: 'Type PROTECTED_TEST_MODE_PREFLIGHT_ONLY'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  credential-readiness:
+    if: ${{ inputs.acknowledgement == 'PROTECTED_TEST_MODE_PREFLIGHT_ONLY' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: healthwise-stripe-testmode
+    steps:
+      - name: Validate protected credentials without disclosing values
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.HEALTHWISE_STRIPE_TEST_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.HEALTHWISE_STRIPE_TEST_WEBHOOK_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$STRIPE_SECRET_KEY" =~ ^sk_test_[A-Za-z0-9]+$ ]]; then
+            echo "::error::Missing or invalid Stripe test secret key"; exit 1
+          fi
+          if [[ ! "$STRIPE_WEBHOOK_SECRET" =~ ^whsec_[A-Za-z0-9]+$ ]]; then
+            echo "::error::Missing or invalid test webhook signing secret"; exit 1
+          fi
+          echo "PASS: protected test-mode secret formats present; no provider API calls made"
+      - name: Confirm execution is non-transactional
+        run: |
+          echo "OFFLINE_READINESS_ONLY: no checkout, Stripe API request, webhook registration, or live-mode action"
+# A future authenticated test job MUST NOT be added until environment protection,
+# cost/side-effect policy, scoped secrets, and founder execution approval are verified.
