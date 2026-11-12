@@ -45,4 +45,5 @@ jobs:
           print("PASS: Stripe test-mode read-only authentication verified (livemode=false)")
           PY
       - name: Confirm no transactional operations
-        run: echo "READ_ONLY_VERIFICATION: no Checkout sessions, charges, webhook registration, or deployment"
+        run: |
+          echo "READ_ONLY_VERIFICATION: no Checkout sessions, charges, webhook registration, or deployment"
