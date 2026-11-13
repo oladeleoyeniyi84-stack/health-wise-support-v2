@@ -44,6 +44,34 @@ jobs:
               sys.exit(1)
           print("PASS: Stripe test-mode read-only authentication verified (livemode=false)")
           PY
+      - name: Verify protected key belongs to Healthwise v2 sandbox account (read only)
+        env:
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          EXPECTED_ACCOUNT_ID: acct_1T36fzDSAM5aSpF4
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          if [[ ! "$STRIPE_TEST_SECRET_KEY" =~ ^sk_test_[A-Za-z0-9]+$ ]]; then
+            echo "::error::Protected test-mode credential missing or invalid"; exit 1
+          fi
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+          status="$(curl --silent --show-error --max-time 20 --retry 0 --output "$body" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $STRIPE_TEST_SECRET_KEY" \
+            https://api.stripe.com/v1/account)"
+          if [[ "$status" != 200 ]]; then
+            echo "::error::Read-only Stripe account identity check failed (HTTP $status)"; exit 1
+          fi
+          python3 - "$body" "$EXPECTED_ACCOUNT_ID" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              account = json.load(f)
+          if account.get("object") != "account" or account.get("id") != sys.argv[2]:
+              print("::error::Protected Stripe key points to a different account; fail closed")
+              sys.exit(1)
+          print("PASS: protected Stripe credential belongs to expected Healthwise sandbox account")
+          PY
       - name: Confirm no transactional operations
         run: |
           echo "READ_ONLY_VERIFICATION: no Checkout sessions, charges, webhook registration, or deployment"
