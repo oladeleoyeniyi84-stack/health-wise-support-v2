@@ -23,5 +23,9 @@ export async function createSandboxCheckout({ stripe, order, selection, origin }
     cancel_url: origin + "/consultations"
   }, { idempotencyKey: selection.idempotencyKey });
   if (!session || typeof session.id !== "string" || !session.id.startsWith("cs_test_")) throw new Error("non_test_session_rejected");
-  return Object.freeze({ sessionId: session.id, checkoutUrl: session.url });
+  // Never expose an untrusted redirect from an injected or compromised provider response.
+  let checkoutUrl;
+  try { checkoutUrl = new URL(session.url); } catch { throw new Error("invalid_checkout_url"); }
+  if (checkoutUrl.protocol !== "https:" || checkoutUrl.hostname !== "checkout.stripe.com" || checkoutUrl.username || checkoutUrl.password || checkoutUrl.port) throw new Error("invalid_checkout_url");
+  return Object.freeze({ sessionId: session.id, checkoutUrl: checkoutUrl.href });
 }
