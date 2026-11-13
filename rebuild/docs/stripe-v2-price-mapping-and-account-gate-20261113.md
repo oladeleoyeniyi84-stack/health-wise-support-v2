@@ -16,3 +16,10 @@
 - No public checkout route or webhook endpoint is mounted. Future reconciliation must use a separate signed endpoint, raw-body signature validation, deduplication, retry and durable order state.
 - Existing Replit webhook in this Stripe sandbox was independently confirmed `disabled`; separate Replit account billing, live-mode integrations and Calendly coupling remain outside the scope of this verification.
 - Production restore/PITR, migration rehearsal, operational monitoring and release authorization remain blockers.
+
+## Verified follow-up: protected account match (2026-11-13)
+- GitHub Actions protected workflow run **43504428461**, **attempt 2**, completed successfully after founder environment approval.
+- Independently fetched job logs for successful job **132169567750**. Explicit output: `PASS: Stripe test-mode read-only authentication verified (livemode=false)` and `PASS: protected Stripe credential belongs to expected Healthwise sandbox account`.
+- The checked account is `acct_1T36fzDSAM5aSpF4`. The initial attempt had failed closed because it matched a different account; the successful second attempt demonstrates that the protected credential is now aligned.
+- The run also logged `READ_ONLY_VERIFICATION: no Checkout sessions, charges, webhook registration, or deployment`.
+- **No authorization or activation of Stripe Checkout, v2 prices, webhook endpoint, production app, or Replit resources is implied by this result.**
