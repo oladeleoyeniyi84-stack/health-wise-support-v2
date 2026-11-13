@@ -7,6 +7,7 @@ import { readFile } from "node:fs/promises";
 import { Pool } from "pg";
 import { assertDisposableDatabase } from "./support/disposable-db-guard.mjs";
 import { bindSandboxCheckoutSession } from "../src/integrations/sandbox-session-binding.mjs";
+import { reserveSandboxCheckoutAttempt } from "../src/integrations/sandbox-checkout-attempts.mjs";
 
 const url=assertDisposableDatabase({
   url:process.env.HEALTHWISE_TEST_DATABASE_URL,
@@ -29,6 +30,8 @@ try {
     created=true;
     await setup.query('SET search_path TO "'+schema+'", public');
     await setup.query(ddl);
+    const journalMigration=await readFile(new URL("../db/002_sandbox_checkout_attempts.sql",import.meta.url),"utf8");
+    await setup.query(journalMigration.replace(/^BEGIN;\s*/m,"").replace(/\s*COMMIT;\s*$/m,""));
     await setup.query("INSERT INTO accounts(id,provider_subject) VALUES ($1,'binding_user')",[accountId]);
     for (const id of [orderA,orderB]) {
       await setup.query(
@@ -39,6 +42,25 @@ try {
   } finally {setup.release();}
   scoped=new Pool({connectionString:url,max:4,connectionTimeoutMillis:3000,options:"-c search_path="+schema});
   const bind=(orderId,sessionId,customPrice=priceId)=>bindSandboxCheckoutSession({pool:scoped,orderId,sessionId,priceId:customPrice});
+
+  // Concurrent reservation of distinct keys for one order: exactly one
+  // durable attempt must win; a retry using its original key is idempotent.
+  const reserve=(orderId,idempotencyKey)=>reserveSandboxCheckoutAttempt({pool:scoped,orderId,priceId,idempotencyKey});
+  const attempts=await Promise.allSettled([
+    reserve(orderA,"healthwise_checkout_attempt_one_123"),
+    reserve(orderA,"healthwise_checkout_attempt_two_456")
+  ]);
+  assert.equal(attempts.filter(x=>x.status==="fulfilled").length,1);
+  assert.equal(attempts.filter(x=>x.status==="rejected").length,1);
+  assert.match(attempts.find(x=>x.status==="rejected").reason.message,/checkout_attempt_conflict/);
+  const winningKey=attempts.find(x=>x.status==="fulfilled").value.idempotencyKey;
+  assert.equal((await reserve(orderA,winningKey)).idempotencyKey,winningKey);
+  const journal=await scoped.query("SELECT count(*)::int AS count FROM sandbox_checkout_attempts WHERE order_id=$1",[orderA]);
+  assert.equal(journal.rows[0].count,1);
+  await assert.rejects(reserve(orderB,winningKey),e=>e?.code==="23505");
+  const secondJournal=await scoped.query("SELECT count(*)::int AS count FROM sandbox_checkout_attempts WHERE order_id=$1",[orderB]);
+  assert.equal(secondJournal.rows[0].count,0);
+  console.log("PASS: disposable PostgreSQL serializes concurrent Checkout intent reservation and idempotency key ownership");
 
   // Concurrent calls racing to bind different sessions to the same pending order:
   // exactly one wins; the other fails with a conflict after its guarded UPDATE.
