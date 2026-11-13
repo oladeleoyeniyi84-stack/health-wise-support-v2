@@ -37,3 +37,10 @@ test("unverified test-mode status cannot call provider",async()=>{
   await assert.rejects(createSandboxCheckout({stripe,order,selection,origin:"https://example.org"}),/test_mode_not_verified/);
   assert.equal(calls.length,0);
 });
+
+test("provider redirect must be Stripe-hosted HTTPS even for test sessions",async()=>{
+  for(const url of ["http://checkout.stripe.com/c/pay/cs_test_123","https://checkout.stripe.com.evil.example/pay","https://evil.example/pay","javascript:alert(1)","https://user:pass@checkout.stripe.com/pay"]) {
+    const {stripe}=client({id:"cs_test_123",url});
+    await assert.rejects(createSandboxCheckout({stripe,order,selection,origin:"https://example.org"}),/invalid_checkout_url/);
+  }
+});
