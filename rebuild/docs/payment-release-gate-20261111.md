@@ -15,16 +15,19 @@
 - Synthetic disposable PostgreSQL 16 backup and isolated restore passed, preserving rows, uniqueness constraints, and foreign keys. This is **not** a production recovery test.
 - Legacy webhook module delegates to the preferred signed short-transaction reconciliation path; tests cover provider-outage retry and idempotent redelivery.
 
-## Protected Stripe readiness preparation (not executed)
-- Added `.github/workflows/healthwise-stripe-protected-readiness.yml` with manual dispatch, exact acknowledgement, read-only repository permission, a dedicated `healthwise-stripe-testmode` environment, and format-only checks for two protected secrets. It does not invoke Stripe or create a Checkout session.
-- **Not verified:** GitHub environment creation, required reviewers/branch restrictions, secret provisioning, or a successful run. Environment declarations in workflow YAML alone do not prove approval controls are configured; do not run until those controls and founder consent are verified.
-- Expected environment secrets: `HEALTHWISE_STRIPE_TEST_SECRET_KEY` (`sk_test_...`) and `HEALTHWISE_STRIPE_TEST_WEBHOOK_SECRET` (`whsec_...`). Never enter values in chat, commits, or logs.
+## Protected Stripe read-only readiness (verified 2026-11-12)
+- Founder configured GitHub environment `healthwise-stripe-testmode`, restricted it to `rebuild/healthwise-foundation-20261110`, and added environment secret `STRIPE_TEST_SECRET_KEY` (value never shared in chat or committed).
+- Founder approved the environment-protected manual workflow dispatch.
+- **GitHub Actions run 43354677062 / workflow #3 succeeded** on commit `403dd05`. Independently inspected job logs report: `PASS: Stripe test-mode read-only authentication verified (livemode=false)`.
+- The workflow used a read-only Stripe balance API request; the logs explicitly state that it created **no** Checkout session, charge, webhook registration or deployment.
+- A regression test `protected-stripe-workflow-boundary.test.mjs` now checks manual dispatch, branch restriction, read-only repository permission, protected secret reference, and the absence of transactional Stripe endpoints.
+- **Not verified:** authenticated Checkout creation, webhook delivery, test-price configuration, or real end-to-end payment reconciliation. This successful authentication is not permission to create payment sessions or publish the app.
 
 ## Unverified / blocking
-1. **Real Stripe test-mode API:** No authenticated checkout creation, retrieved session, line-item API response, or provider-delivered webhook has been tested against Stripe. The SDK tests use synthetic signed events and stubbed API calls.
+1. **Real Stripe test-mode API:** Read-only Stripe test-mode authentication is verified; authenticated checkout creation, retrieved session, line-item API response, and provider-delivered webhook have not been tested against Stripe. The SDK tests use synthetic signed events and stubbed API calls.
 2. **Production-grade webhook route:** The preferred `signed-reconciliation.mjs` is not mounted on the public preview server. An isolated, unmounted HTTP sandbox harness has regression tests for raw bytes, signature, size limits and retry responses. Production-grade routing, deployment configuration, timeouts, and observability remain unverified.
 3. **Legacy webhook migration:** The former in-transaction provider lookup implementation was retired. `src/integrations/stripe-webhook.mjs` now delegates to the preferred short-transaction signed path. The migration is covered by offline tests but remains **unverified with authenticated Stripe sandbox calls and an HTTP endpoint**.
-4. **Provider credentials:** Test credentials must be provided only through a protected secret store, never committed to GitHub, logged, or copied into chat. Confirm a verified `sk_test_` credential and dedicated `whsec_` test endpoint before optional authenticated sandbox checks.
+4. **Provider credentials:** Test credentials must be provided only through a protected secret store, never committed to GitHub, logged, or copied into chat. The protected `STRIPE_TEST_SECRET_KEY` passed read-only authentication; a dedicated `whsec_` test endpoint and its secure configuration remain unverified.
 5. **Checkout persistence:** Confirm test-mode Checkout session creation, idempotency, order/session binding, and recoverability after partial failure.
 6. **Real database recovery:** Dedicated app production backup/PITR, isolated restore rehearsal, migration safety, and rollback plan are not verified. Disposable CI database tests are not a substitute.
 7. **Operational controls:** Verify retry monitoring, reconciliation of stuck/manual-review orders, refunds and disputes policy, alerting, least-privilege secrets, and failure injection.
