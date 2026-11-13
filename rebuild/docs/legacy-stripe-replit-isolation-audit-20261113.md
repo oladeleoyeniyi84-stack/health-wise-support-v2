@@ -10,9 +10,15 @@
 - `rebuild/src/integrations/stripe-sandbox.mjs` has a test-mode-only injected Checkout adapter, not mounted in the preview server.
 - Founder screenshot of the Stripe Healthwise sandbox shows legacy Quick $49, Full $99 and Premium $199 consultation products. The screenshot does not reveal their Price IDs, webhook subscriptions, payment links or API usage.
 
+## Confirmed Stripe sandbox webhook finding (founder screenshot, 2026-11-13)
+- Stripe Workbench → Webhooks shows **one visible Active destination** with a truncated URL matching `https://fc445317-...rf.replit.dev/api/stripe/we...`.
+- It is configured for **89 event types**, events from **Your account**, with **0% displayed error rate**. The screenshot does not establish request volume, last delivery, full endpoint path, or whether Replit is running/billing.
+- **Risk:** account-level events from newly created sandbox products or Checkout sessions may also be delivered to this legacy Replit endpoint. Distinct v2 Price IDs alone do not isolate webhook delivery.
+- **Required action before Stripe writes:** verify destination details, legacy dependency/usage and delivery history, then obtain founder approval to disable the legacy **sandbox-only** destination if no longer needed. Do not delete it or alter live-mode endpoints. Capture configuration evidence without webhook signing secrets.
+
 ## Not yet verified (external system inspection required)
 1. Stripe sandbox identity of protected GitHub `STRIPE_TEST_SECRET_KEY` versus the Healthwise sandbox in the screenshot.
-2. Existing Stripe webhook destinations, event subscriptions, Connect/account scope, and which destinations route to legacy Replit endpoints.
+2. Full URL, delivery history, event selection and any additional destinations: one active Replit-targeted sandbox destination is confirmed in the screenshot.
 3. Legacy Payment Links, Checkout configurations, active products/prices and any active customer-facing links.
 4. Whether Replit deployments, scheduled tasks, integrations or billing resources remain active; do not assume code dependencies cause charges.
 5. Any external Calendly-to-Stripe integrations that could trigger duplicate payment or booking behavior.
