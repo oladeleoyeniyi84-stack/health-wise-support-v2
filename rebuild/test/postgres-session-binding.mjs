@@ -8,6 +8,7 @@ import { Pool } from "pg";
 import { assertDisposableDatabase } from "./support/disposable-db-guard.mjs";
 import { bindSandboxCheckoutSession } from "../src/integrations/sandbox-session-binding.mjs";
 import { reserveSandboxCheckoutAttempt } from "../src/integrations/sandbox-checkout-attempts.mjs";
+import { bindRecoveredSandboxSession } from "../src/integrations/sandbox-atomic-recovery.mjs";
 
 const url=assertDisposableDatabase({
   url:process.env.HEALTHWISE_TEST_DATABASE_URL,
@@ -93,6 +94,53 @@ try {
   const rows=await scoped.query("SELECT id,stripe_session_id,status FROM consultation_orders WHERE id IN ($1,$2)",[orderA,orderB]);
   assert.equal(rows.rowCount,2);
   assert.equal(new Set(rows.rows.map(x=>x.stripe_session_id)).size,2);
+
+  // Recovery module commits BOTH the order and journal in one transaction.
+  const recoveryOrder="88888888-8888-4888-8888-888888888888";
+  await scoped.query(
+    "INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor) VALUES($1,$2,'quick',$3,'usd',4900)",
+    [recoveryOrder,accountId,priceId]
+  );
+  const recoveryKey="healthwise_recovery_attempt_123456";
+  await reserve(recoveryOrder,recoveryKey);
+  const recover=(sessionId)=>bindRecoveredSandboxSession({pool:scoped,orderId:recoveryOrder,sessionId,priceId,idempotencyKey:recoveryKey});
+  const resolved=await Promise.allSettled([recover("cs_test_recoveryOne"),recover("cs_test_recoveryTwo")]);
+  assert.equal(resolved.filter(x=>x.status==="fulfilled").length,1);
+  assert.equal(resolved.filter(x=>x.status==="rejected").length,1);
+  const recoveryWinner=resolved.find(x=>x.status==="fulfilled").value.sessionId;
+  assert.equal((await recover(recoveryWinner)).action,"already_bound");
+  const verifiedRecovery=await scoped.query(
+    `SELECT o.stripe_session_id AS order_session, a.stripe_session_id AS attempt_session, a.state
+       FROM consultation_orders o JOIN sandbox_checkout_attempts a ON a.order_id=o.id WHERE o.id=$1`,
+    [recoveryOrder]
+  );
+  assert.deepEqual(verifiedRecovery.rows[0],{
+    order_session:recoveryWinner,attempt_session:recoveryWinner,state:"bound"
+  });
+  // Force the second UPDATE to fail with a journal uniqueness violation and
+  // confirm the first UPDATE to consultation_orders is rolled back.
+  const rollbackRecoveryOrder="99999999-9999-4999-8999-999999999999";
+  await scoped.query(
+    "INSERT INTO consultation_orders(id,account_id,consultation_key,configured_price_id,currency,amount_minor) VALUES($1,$2,'quick',$3,'usd',4900)",
+    [rollbackRecoveryOrder,accountId,priceId]
+  );
+  const rollbackRecoveryKey="healthwise_recovery_rollback_123456";
+  await reserve(rollbackRecoveryOrder,rollbackRecoveryKey);
+  const triggerName="fail_recovery_journal_"+process.pid;
+  await scoped.query(`CREATE FUNCTION "${triggerName}"() RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'simulated_journal_failure'; END; $`);
+  await scoped.query(`CREATE TRIGGER "${triggerName}" BEFORE UPDATE ON sandbox_checkout_attempts FOR EACH ROW WHEN (NEW.order_id = '${rollbackRecoveryOrder}'::uuid) EXECUTE FUNCTION "${triggerName}"()`);
+  await assert.rejects(
+    bindRecoveredSandboxSession({pool:scoped,orderId:rollbackRecoveryOrder,sessionId:"cs_test_recoveryRollback",priceId,idempotencyKey:rollbackRecoveryKey}),
+    /simulated_journal_failure/
+  );
+  const rolledBack=await scoped.query(
+    `SELECT o.stripe_session_id AS order_session, a.stripe_session_id AS attempt_session, a.state
+       FROM consultation_orders o JOIN sandbox_checkout_attempts a ON a.order_id=o.id WHERE o.id=$1`,
+    [rollbackRecoveryOrder]
+  );
+  assert.deepEqual(rolledBack.rows[0],{order_session:null,attempt_session:null,state:"prepared"});
+  console.log("PASS: real PostgreSQL atomically binds recovered session to both records; second-update failure rolls back both");
+
   console.log("PASS: disposable PostgreSQL atomically binds sessions, rejects races and duplicates, and fails closed on status/price mismatch");
 } finally {
   if(scoped)await scoped.end();
