@@ -44,3 +44,10 @@ test("provider redirect must be Stripe-hosted HTTPS even for test sessions",asyn
     await assert.rejects(createSandboxCheckout({stripe,order,selection,origin:"https://example.org"}),/invalid_checkout_url/);
   }
 });
+
+test("malformed provider responses never expose a checkout redirect",async()=>{
+  for(const result of [null,{}, {id:"cs_live_123",url:"https://checkout.stripe.com/c/pay/live"}, {id:"cs_test_123"}, {id:"cs_test_123",url:"https://checkout.stripe.com:8443/c/pay/cs_test_123"}]) {
+    const {stripe}=client(result);
+    await assert.rejects(createSandboxCheckout({stripe,order,selection,origin:"https://example.org"}),/(non_test_session_rejected|invalid_checkout_url)/);
+  }
+});
