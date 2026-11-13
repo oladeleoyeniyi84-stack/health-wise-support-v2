@@ -23,6 +23,11 @@
 - A regression test `protected-stripe-workflow-boundary.test.mjs` now checks manual dispatch, branch restriction, read-only repository permission, protected secret reference, and the absence of transactional Stripe endpoints.
 - **Not verified:** authenticated Checkout creation, webhook delivery, test-price configuration, or real end-to-end payment reconciliation. This successful authentication is not permission to create payment sessions or publish the app.
 
+## Latest isolated checkout verification (2026-11-12)
+- GitHub Actions run **43357182213** passed all four jobs with **122/122** unit tests (0 failures), including checkout redirect host/protocol validation.
+- The isolated checkout adapter validates Stripe-hosted HTTPS redirects and rejects malformed provider responses; these are mock-only tests, not authenticated Stripe Checkout creation.
+- Additional malformed-provider-response regression coverage was committed after that successful run and requires a fresh CI check.
+
 ## Unverified / blocking
 1. **Real Stripe test-mode API:** Read-only Stripe test-mode authentication is verified; authenticated checkout creation, retrieved session, line-item API response, and provider-delivered webhook have not been tested against Stripe. The SDK tests use synthetic signed events and stubbed API calls.
 2. **Production-grade webhook route:** The preferred `signed-reconciliation.mjs` is not mounted on the public preview server. An isolated, unmounted HTTP sandbox harness has regression tests for raw bytes, signature, size limits and retry responses. Production-grade routing, deployment configuration, timeouts, and observability remain unverified.
