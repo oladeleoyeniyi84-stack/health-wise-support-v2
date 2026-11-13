@@ -1,0 +1,49 @@
+name: Healthwise Stripe Protected Test-Mode Readiness
+# Manual only; read-only Stripe API authentication. No checkout, payment, or deployment.
+on:
+  workflow_dispatch:
+    inputs:
+      acknowledgement:
+        description: 'Type READ_ONLY_STRIPE_TEST_AUTH'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  testmode-readonly-auth:
+    if: ${{ github.ref == 'refs/heads/rebuild/healthwise-foundation-20261110' && inputs.acknowledgement == 'READ_ONLY_STRIPE_TEST_AUTH' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: healthwise-stripe-testmode
+    steps:
+      - name: Authenticate to Stripe using protected test-mode secret (read only)
+        env:
+          STRIPE_TEST_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          if [[ ! "$STRIPE_TEST_SECRET_KEY" =~ ^sk_test_[A-Za-z0-9]+$ ]]; then
+            echo "::error::Protected Stripe test-mode key is missing or invalid"; exit 1
+          fi
+          # Retrieve balance: read-only endpoint. Never print the key or response body.
+          body="$(mktemp)"
+          trap 'rm -f "$body"' EXIT
+          status="$(curl --silent --show-error --max-time 20 --retry 0 --output "$body" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $STRIPE_TEST_SECRET_KEY" \
+            https://api.stripe.com/v1/balance)"
+          if [[ "$status" != 200 ]]; then
+            echo "::error::Stripe test-mode read-only authentication failed (HTTP $status)"; exit 1
+          fi
+          python3 - "$body" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as f:
+              response = json.load(f)
+          if response.get("object") != "balance" or response.get("livemode") is not False:
+              print("::error::Stripe response did not verify test-mode balance")
+              sys.exit(1)
+          print("PASS: Stripe test-mode read-only authentication verified (livemode=false)")
+          PY
+      - name: Confirm no transactional operations
+        run: |
+          echo "READ_ONLY_VERIFICATION: no Checkout sessions, charges, webhook registration, or deployment"
