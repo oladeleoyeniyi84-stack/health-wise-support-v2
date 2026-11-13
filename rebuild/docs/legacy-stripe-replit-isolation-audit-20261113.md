@@ -32,3 +32,11 @@
 
 ## Next evidence collection
 Review Stripe sandbox **Developers → Webhooks / Event destinations** and **Payment Links** (screenshots with secrets/customer data hidden). Check Replit dashboard billing/deployments without starting or restarting anything. Cross-check all destination URLs against known legacy services and the future isolated v2 endpoint.
+
+## Confirmed remedial action (2026-11-13)
+- Founder supplied broad authorization for engineering remediation, including disabling the legacy Healthwise sandbox webhook.
+- Stripe connected API account: `acct_1T36fzDSAM5aSpF4`, **livemode=false**, name **Healthwise Support Sandbox**.
+- Stripe API initial list confirmed a single endpoint `we_1UZjLPDSAM5aSpF4mki2GEil`, status `enabled`, 89 subscriptions, Replit URL ending `/api/stripe/webhook`.
+- Updated **only** this sandbox endpoint using `disabled=true`. Stripe returned status `disabled`.
+- Independently retrieved the same endpoint afterward; Stripe confirmed `status=disabled`, `livemode=false`, 89 preserved event subscriptions. No live endpoint edited or deleted.
+- Stripe webhook configuration isolation improved; Replit deployment status, account billing, Payment Links, and independent integrations still need separate auditing. Do not declare Replit billing closed.
