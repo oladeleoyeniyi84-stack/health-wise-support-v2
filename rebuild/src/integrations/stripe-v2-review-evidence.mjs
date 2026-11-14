@@ -20,7 +20,7 @@ export async function appendBlockedV2ReviewEvidence({
   // Only a server-side authenticated identity adapter may return this object.
   // Never accept a public body-supplied reviewer ID or a client-set role.
   const operator=await resolveOperator();
-  if(operator?.authenticated!==true || operator?.permissions?.includes?.("healthwise.checkout.review_evidence")!==true ||
+  if(operator?.authenticated!==true || (!Array.isArray(operator?.permissions) || !operator.permissions.includes("healthwise.checkout.review_evidence")) ||
      typeof operator.id!=="string" || !/^[A-Za-z0-9_-]{3,80}$/.test(operator.id))
     throw new Error("review_operator_forbidden");
   const recordedBy=operator.id;
