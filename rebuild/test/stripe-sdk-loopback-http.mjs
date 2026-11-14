@@ -56,7 +56,7 @@ const server=createIsolatedSandboxWebhookServer({stripe,repository,endpointSecre
 await new Promise((resolve,reject)=>{server.once("error",reject);server.listen(0,"127.0.0.1",resolve);});
 const host="http://127.0.0.1:"+server.address().port;
 const post=(raw,sig)=>fetch(host+"/sandbox/webhook",{
-  method:"POST",headers:{"stripe-signature":sig},body:raw
+  method:"POST",headers:{"stripe-signature":sig,"content-type":"application/json"},body:raw
 });
 try{
   assert.equal(server.address().address,"127.0.0.1");
