@@ -1,5 +1,6 @@
 import { authorizeV2SandboxCheckoutPreflight } from "./stripe-v2-checkout-authorization.mjs";
 import { reserveVerifiedV2SandboxAttempt } from "./stripe-v2-verified-attempt-reservation.mjs";
+import { reserveOwnerBoundV2SandboxAttempt } from "./stripe-v2-owner-bound-reservation.mjs";
 
 /**
  * Engineering-only pre-Checkout preparation. This function is intentionally
@@ -9,7 +10,7 @@ import { reserveVerifiedV2SandboxAttempt } from "./stripe-v2-verified-attempt-re
  * account+active pinned catalog, then durably reserve one immutable attempt.
  * Actual provider creation requires a separate, unimplemented release gate.
  */
-export async function prepareV2SandboxCheckoutAttempt({ stripe, pool, orderId, idempotencyKey }) {
+export async function prepareV2SandboxCheckoutAttempt({ stripe, pool, orderId, idempotencyKey, expectedOwnerSubject }) {
   if (typeof pool?.query !== "function") throw new Error("pool_required");
   if (typeof orderId !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId)) throw new Error("invalid_order_id");
@@ -38,8 +39,10 @@ export async function prepareV2SandboxCheckoutAttempt({ stripe, pool, orderId, i
 
   // The SQL reservation independently checks pending status, current price,
   // and no bound session in case order state changes after initial SELECT.
-  const attempt = await reserveVerifiedV2SandboxAttempt({
-    pool, orderId, priceId: selected.stripePriceId,
+  const reserve = expectedOwnerSubject === undefined
+    ? reserveVerifiedV2SandboxAttempt : reserveOwnerBoundV2SandboxAttempt;
+  const attempt = await reserve({
+    pool, expectedOwnerSubject, orderId, priceId: selected.stripePriceId,
     amountCents: selected.amountCents, currency: selected.currency,
     tier: order.consultation_key, idempotencyKey
   });
