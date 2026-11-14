@@ -1,5 +1,5 @@
 import { authorizeV2SandboxCheckoutPreflight } from "./stripe-v2-checkout-authorization.mjs";
-import { reserveSandboxCheckoutAttempt } from "./sandbox-checkout-attempts.mjs";
+import { reserveVerifiedV2SandboxAttempt } from "./stripe-v2-verified-attempt-reservation.mjs";
 
 /**
  * Engineering-only pre-Checkout preparation. This function is intentionally
@@ -38,8 +38,10 @@ export async function prepareV2SandboxCheckoutAttempt({ stripe, pool, orderId, i
 
   // The SQL reservation independently checks pending status, current price,
   // and no bound session in case order state changes after initial SELECT.
-  const attempt = await reserveSandboxCheckoutAttempt({
-    pool, orderId, priceId: selected.stripePriceId, idempotencyKey
+  const attempt = await reserveVerifiedV2SandboxAttempt({
+    pool, orderId, priceId: selected.stripePriceId,
+    amountCents: selected.amountCents, currency: selected.currency,
+    tier: order.consultation_key, idempotencyKey
   });
   // This receipt is never a Checkout URL, entitlement or permission to call
   // Stripe. A prepared journal record may represent an uncertain attempt.
