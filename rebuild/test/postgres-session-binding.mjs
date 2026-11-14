@@ -127,7 +127,7 @@ try {
   const rollbackRecoveryKey="healthwise_recovery_rollback_123456";
   await reserve(rollbackRecoveryOrder,rollbackRecoveryKey);
   const triggerName="fail_recovery_journal_"+process.pid;
-  await scoped.query(`CREATE FUNCTION "${triggerName}"() RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'simulated_journal_failure'; END; $`);
+  await scoped.query(`CREATE FUNCTION "${triggerName}"() RETURNS trigger LANGUAGE plpgsql AS $recovery$ BEGIN RAISE EXCEPTION 'simulated_journal_failure'; END; $recovery$`);
   await scoped.query(`CREATE TRIGGER "${triggerName}" BEFORE UPDATE ON sandbox_checkout_attempts FOR EACH ROW WHEN (NEW.order_id = '${rollbackRecoveryOrder}'::uuid) EXECUTE FUNCTION "${triggerName}"()`);
   await assert.rejects(
     bindRecoveredSandboxSession({pool:scoped,orderId:rollbackRecoveryOrder,sessionId:"cs_test_recoveryRollback",priceId,idempotencyKey:rollbackRecoveryKey}),
