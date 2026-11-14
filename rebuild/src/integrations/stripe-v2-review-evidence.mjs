@@ -7,7 +7,7 @@
  * review material, NOT proof that a provider request did or did not occur.
  */
 export async function appendBlockedV2ReviewEvidence({
-  pool,orderId,requestSha256,evidenceKind,evidenceSha256,recordedBy
+  pool,orderId,requestSha256,evidenceKind,evidenceSha256,resolveOperator
 }) {
   const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const hash=/^[a-f0-9]{64}$/;
@@ -16,12 +16,18 @@ export async function appendBlockedV2ReviewEvidence({
     "provider_absence_unproven","manual_escalation"
   ]);
   if(typeof pool?.query!=="function")throw new Error("review_store_required");
+  if(typeof resolveOperator!=="function")throw new Error("trusted_operator_required");
+  // Only a server-side authenticated identity adapter may return this object.
+  // Never accept a public body-supplied reviewer ID or a client-set role.
+  const operator=await resolveOperator();
+  if(operator?.authenticated!==true || operator?.permissions?.includes?.("healthwise.checkout.review_evidence")!==true ||
+     typeof operator.id!=="string" || !/^[A-Za-z0-9_-]{3,80}$/.test(operator.id))
+    throw new Error("review_operator_forbidden");
+  const recordedBy=operator.id;
   if(typeof orderId!=="string" || !uuid.test(orderId) ||
      typeof requestSha256!=="string" || !hash.test(requestSha256) ||
      typeof evidenceSha256!=="string" || !hash.test(evidenceSha256) ||
-     !kinds.has(evidenceKind) ||
-     typeof recordedBy!=="string" ||
-     !/^[A-Za-z0-9_-]{3,80}$/.test(recordedBy))
+     !kinds.has(evidenceKind))
     throw new Error("invalid_review_evidence");
   const values=[orderId,requestSha256,evidenceKind,evidenceSha256,recordedBy];
   const inserted=await pool.query(
