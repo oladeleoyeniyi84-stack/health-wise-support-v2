@@ -64,8 +64,17 @@ export async function persistV2CheckoutRequestSnapshot({pool,snapshot}) {
     return Object.freeze({action:"snapshot_recorded",orderId:t.orderId,sha256:recalc.sha256});
   if(result.rowCount!==0)throw new Error("snapshot_conflict");
   const old=await pool.query(
-    `SELECT request_sha256,owner_subject,configured_price_id,amount_minor,currency,idempotency_key
-       FROM sandbox_checkout_request_snapshots WHERE order_id=$1`,[t.orderId]
+    `SELECT s.request_sha256,s.owner_subject,s.configured_price_id,s.amount_minor,s.currency,s.idempotency_key
+       FROM sandbox_checkout_request_snapshots s
+       JOIN consultation_orders o ON o.id=s.order_id
+       JOIN accounts a ON a.id=o.account_id
+       JOIN sandbox_checkout_attempts j ON j.order_id=o.id
+      WHERE s.order_id=$1 AND a.provider_subject=$2
+        AND o.status='pending' AND o.stripe_session_id IS NULL
+        AND o.consultation_key=$3 AND o.configured_price_id=$4
+        AND o.amount_minor=$5 AND o.currency=$6
+        AND j.idempotency_key=$7 AND j.configured_price_id=$4
+        AND j.state='prepared' AND j.stripe_session_id IS NULL`,[t.orderId,t.ownerSubject,t.tier,t.stripePriceId,t.amountCents,t.currency,t.idempotencyKey]
   );
   if(old.rowCount!==1 || !old.rows?.[0] ||
      old.rows[0].request_sha256!==recalc.sha256 ||
