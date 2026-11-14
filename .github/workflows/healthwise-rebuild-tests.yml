@@ -147,3 +147,5 @@ jobs:
         run: npm install --no-save --package-lock=false stripe
       - name: Verify real SDK webhook signature using offline synthetic event
         run: node test/stripe-sdk-signature.mjs
+      - name: Verify signed HTTP delivery on isolated loopback using real Stripe SDK
+        run: node test/stripe-sdk-loopback-http.mjs
