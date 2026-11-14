@@ -46,6 +46,25 @@ try{
   assert.equal((await reserveOwnerBoundV2SandboxAttempt(args(pool,order1,key1))).idempotencyKey,key1);
   await assert.rejects(reserveOwnerBoundV2SandboxAttempt(args(pool,order1,"hw_owner_gate_other_key_123456")),/checkout_attempt_conflict/);
 
+  // An aged journal must remain durable for manual provider reconciliation,
+  // never silently be reset or accepted for a new Checkout operation.
+  await pool.query(
+    "UPDATE sandbox_checkout_attempts SET created_at=now()-interval '20 minutes' WHERE order_id=$1",
+    [order1]
+  );
+  await assert.rejects(
+    reserveOwnerBoundV2SandboxAttempt(args(pool,order1,key1)),
+    /checkout_attempt_requires_review/
+  );
+  const preserved=await pool.query(
+    "SELECT idempotency_key,state FROM sandbox_checkout_attempts WHERE order_id=$1",
+    [order1]
+  );
+  assert.equal(preserved.rowCount,1);
+  assert.equal(preserved.rows[0].idempotency_key,key1);
+  assert.equal(preserved.rows[0].state,"prepared");
+
+
   // Simulated reassignment after authentication but before the locked write.
   await pool.query("UPDATE consultation_orders SET account_id=$2 WHERE id=$1",[order2,owner2]);
   await assert.rejects(reserveOwnerBoundV2SandboxAttempt(args(pool,order2,"hw_owner_gate_second_key_123456")),/checkout_owner_mismatch/);
