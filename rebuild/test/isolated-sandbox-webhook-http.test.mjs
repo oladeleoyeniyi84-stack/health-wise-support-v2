@@ -116,3 +116,17 @@ test("body timeout cannot be disabled or raised beyond engineering limit",()=>{
   assert.throws(()=>createIsolatedSandboxWebhookServer({...h,bodyTimeoutMs}),/invalid_body_timeout/);
  }
 });
+
+
+test("isolated listener rejects missing, wrong, and excessive HTTP headers before signature work",async()=>{
+ const h=harness();
+ await withServer(h,async url=>{
+  const wrong=await post(url,"signed-raw",{"content-type":"text/plain"});
+  assert.equal(wrong.status,415);
+  const missing=await post(url,"signed-raw",{"content-type":""});
+  assert.equal(missing.status,415);
+  const huge=await post(url,"signed-raw",{"stripe-signature":"x".repeat(8193)});
+  assert.equal(huge.status,400);
+ });
+ assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
+});
