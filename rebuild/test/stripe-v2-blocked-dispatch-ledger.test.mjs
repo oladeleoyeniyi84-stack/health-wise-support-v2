@@ -48,6 +48,8 @@ test("first locked claim records an uncertain outcome, NEVER send permission",as
  });
  assert.equal(f.calls[0],"BEGIN");
  assert.ok(f.calls[1].includes("FOR UPDATE OF o"));
+ const insertion=f.calls.find(sql=>sql.includes("INSERT INTO sandbox_checkout_dispatch_ledger"));
+ assert.match(insertion,/VALUES \(\$1,\$2,\x27outcome_uncertain\x27\)/);
  assert.deepEqual(f.calls.slice(-2),["COMMIT","RELEASE"]);
 });
 test("already-claimed outcome fails closed and rolls back",async()=>{
