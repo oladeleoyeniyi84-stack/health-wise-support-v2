@@ -18,15 +18,22 @@ function fixture({active=false,accountId=HEALTHWISE_V2_SANDBOX_ACCOUNT,livemode=
     if(sql.includes("INSERT INTO sandbox_checkout_attempts")) {
       calls.push("reserve");
       if(!db.order || db.order.status!=="pending" || db.order.stripe_session_id != null ||
-         db.order.configured_price_id!==params[1]) return {rowCount:0,rows:[]};
+         db.order.configured_price_id!==params[1] || Number(db.order.amount_minor)!==params[2] ||
+         db.order.currency!==params[3] || db.order.consultation_key!==params[4]) return {rowCount:0,rows:[]};
       if(db.attempt)return {rowCount:0,rows:[]};
-      db.attempt={order_id:orderId,configured_price_id:params[1],idempotency_key:params[2],
+      db.attempt={order_id:orderId,configured_price_id:params[1],idempotency_key:params[5],
         state:"prepared",stripe_session_id:null,created_at:new Date()};
       return {rowCount:1,rows:[db.attempt]};
     }
-    if(sql.startsWith("SELECT order_id, configured_price_id")) {
+    if(sql.includes("JOIN sandbox_checkout_attempts a")) {
       calls.push("read_attempt");
-      return {rowCount:db.attempt?1:0,rows:db.attempt?[db.attempt]:[]};
+      const observed = db.attempt && db.order ? {
+        ...db.order,order_session:db.order.stripe_session_id,
+        idempotency_key:db.attempt.idempotency_key,state:db.attempt.state,
+        attempt_session:db.attempt.stripe_session_id,attempt_price:db.attempt.configured_price_id,
+        created_at:db.attempt.created_at
+      } : null;
+      return {rowCount:observed?1:0,rows:observed?[observed]:[]};
     }
     throw Error("unexpected_sql");
   }};
