@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { assertDisposableDatabase } from "./support/disposable-db-guard.mjs";
 import { makeV2CheckoutRequestSnapshot,persistV2CheckoutRequestSnapshot } from "../src/integrations/stripe-v2-request-snapshot.mjs";
 import { makeV2FullCheckoutRequestFingerprint,persistV2FullCheckoutRequestFingerprint } from "../src/integrations/stripe-v2-full-request-fingerprint.mjs";
+import { auditLockedV2CheckoutRequest } from "../src/integrations/stripe-v2-locked-request-audit.mjs";
 
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const schema="hw_full_req_"+process.pid;
@@ -38,6 +39,14 @@ try{
   assert.equal((await persistV2CheckoutRequestSnapshot({pool,snapshot})).action,"snapshot_recorded");
   assert.equal((await persistV2FullCheckoutRequestFingerprint({pool,...input})).action,"full_request_recorded");
   assert.equal((await persistV2FullCheckoutRequestFingerprint({pool,...input})).action,"full_request_already_recorded");
+  const auditInput={
+    pool,snapshot,expectedOwnerSubject:snapshot.terms.ownerSubject,
+    returnOrigin:origin,approvedReturnOrigin:origin
+  };
+  const verified=await auditLockedV2CheckoutRequest(auditInput);
+  assert.equal(verified.action,"audit_verified_only");
+  assert.equal(verified.providerWriteAuthorized,false);
+  assert.equal(verified.release,"blocked");
   const old=makeV2FullCheckoutRequestFingerprint(input);
   const row=await pool.query("SELECT request_sha256,success_url,cancel_url FROM sandbox_checkout_full_requests WHERE order_id=$1",[orderId]);
   assert.equal(row.rowCount,1);
@@ -50,6 +59,7 @@ try{
     pool,snapshot,returnOrigin:"https://other.example.net",approvedReturnOrigin:"https://other.example.net"
   }),/full_request_conflict/);
   await pool.query("UPDATE consultation_orders SET amount_minor=9900 WHERE id=$1",[orderId]);
+  await assert.rejects(auditLockedV2CheckoutRequest(auditInput),/locked_checkout_request_mismatch/);
   await assert.rejects(persistV2FullCheckoutRequestFingerprint({pool,...input}),/full_request_conflict/);
   assert.equal((await pool.query("SELECT COUNT(*)::int AS n FROM sandbox_checkout_full_requests WHERE order_id=$1",[orderId])).rows[0].n,1);
   console.log("PASS: immutable full Checkout request hash includes both URLs and forbids mutation, origin swaps or changed monetary terms");
