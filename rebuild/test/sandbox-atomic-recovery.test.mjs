@@ -42,7 +42,7 @@ test("binds both records inside one transaction with fixed lock order",async()=>
 test("same session, price, key and pending order are safely idempotent",async()=>{
   const f=fixture({...prepared,state:"bound",order_session_id:sessionId,attempt_session_id:sessionId});
   assert.equal((await bindRecoveredSandboxSession({pool:f.pool,...params})).action,"already_bound");
-  assert.equal(f.calls.filter(x=>x.sql.includes("UPDATE ")).length,0);
+  assert.equal(f.calls.filter(x=>/^\s*UPDATE\s/i.test(x.sql)).length,0);
 });
 test("inconsistent records, missing rows and changed key fail closed",async()=>{
   for(const row of [
@@ -58,7 +58,7 @@ test("inconsistent records, missing rows and changed key fail closed",async()=>{
     await assert.rejects(bindRecoveredSandboxSession({pool:f.pool,...params}),/recovery_binding_conflict/);
     assert.ok(f.calls.some(x=>x.sql==="ROLLBACK"));
     assert.ok(f.wasReleased());
-    assert.equal(f.calls.filter(x=>x.sql.includes("UPDATE ")).length,0);
+    assert.equal(f.calls.filter(x=>/^\s*UPDATE\s/i.test(x.sql)).length,0);
   }
 });
 test("second UPDATE failure rolls back both records",async()=>{
