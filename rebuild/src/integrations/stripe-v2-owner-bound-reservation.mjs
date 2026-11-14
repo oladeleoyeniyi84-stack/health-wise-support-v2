@@ -1,4 +1,5 @@
 import { reserveVerifiedV2SandboxAttempt } from "./stripe-v2-verified-attempt-reservation.mjs";
+import { assertFreshPreparedSandboxAttempt } from "./stripe-v2-prepared-attempt-age.mjs";
 
 /**
  * Owner-bound, transactional journal reservation for engineering-only v2.
@@ -57,6 +58,10 @@ export async function reserveOwnerBoundV2SandboxAttempt({
       pool:{query:(...args)=>client.query(...args)},
       orderId,priceId,amountCents,currency,tier,idempotencyKey
     });
+    // The transaction is still holding the order lock. Reject outdated or
+    // corrupted prepared journals rather than returning a reusable receipt.
+    // This is NOT permission to create or retry Checkout at Stripe.
+    assertFreshPreparedSandboxAttempt({createdAt:attempt.createdAt});
     await client.query("COMMIT");
     return attempt;
   } catch(error) {
