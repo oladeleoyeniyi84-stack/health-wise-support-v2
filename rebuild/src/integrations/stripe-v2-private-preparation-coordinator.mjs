@@ -49,7 +49,8 @@ export async function coordinateV2SandboxCheckoutPreparation({
   const idempotencyKey="hwv2_"+createHmac("sha256",serverKeySecret)
     .update("healthwise-v2-test-only:checkout:"+orderId).digest("hex");
   const receipt=await prepareV2SandboxCheckoutAttempt({
-    stripe,pool,orderId,idempotencyKey
+    stripe,pool,orderId,idempotencyKey,
+    expectedOwnerSubject:principal.providerSubject
   });
   if (receipt.action!=="prepared_only" || receipt.orderId!==orderId)
     throw new Error("checkout_preparation_failed");
