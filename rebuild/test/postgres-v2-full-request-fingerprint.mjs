@@ -80,7 +80,7 @@ try{
   const evidence={
     pool,orderId,requestSha256:ledger.rows[0].request_sha256,
     evidenceKind:"provider_lookup_incomplete",evidenceSha256:"c".repeat(64),
-    recordedBy:"synthetic_reviewer"
+    resolveOperator:async()=>({authenticated:true,id:"synthetic_reviewer",permissions:["healthwise.checkout.review_evidence"]})
   };
   assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_recorded");
   assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_already_recorded");
