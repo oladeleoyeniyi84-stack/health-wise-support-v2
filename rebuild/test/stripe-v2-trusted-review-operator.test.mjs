@@ -168,3 +168,44 @@ test("server-session lookup failure fails closed before grant or SQL",async()=>{
  assert.equal(grantCalls,0);
  assert.equal(sqlCalls,0);
 });
+
+test("session revocation is rechecked on every evidence write",async()=>{
+ let revoked=false;
+ let grantCalls=0;
+ let sqlCalls=0;
+ const resolveOperator=createTrustedV2ReviewOperatorResolver({
+   loadVerifiedServerSession:async()=>({...goodSession(),revoked}),
+   lookupActiveReviewGrant:async id=>{grantCalls++;return goodGrant(id);},
+   now:()=>time
+ });
+ const pool={query:async()=>{sqlCalls++;return {rowCount:1,rows:[{evidence_id:"synthetic-evidence"}]};}};
+ const request={
+   pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+   requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+   evidenceSha256:"b".repeat(64),resolveOperator
+ };
+ assert.equal((await appendBlockedV2ReviewEvidence(request)).action,"evidence_recorded");
+ revoked=true;
+ await assert.rejects(appendBlockedV2ReviewEvidence(request),/review_operator_forbidden/);
+ assert.equal(grantCalls,1,"revoked session must not reach grant lookup");
+ assert.equal(sqlCalls,1,"revoked session must not reach SQL");
+});
+test("invalid trusted clock fails closed before grant lookup and evidence SQL",async()=>{
+ for(const invalidClock of [new Date(NaN),null,"2026-11-14",Infinity]){
+   let grantCalls=0;
+   let sqlCalls=0;
+   const resolveOperator=createTrustedV2ReviewOperatorResolver({
+     loadVerifiedServerSession:async()=>goodSession(),
+     lookupActiveReviewGrant:async()=>{grantCalls++;return goodGrant("staff_reviewer");},
+     now:()=>invalidClock
+   });
+   const pool={query:async()=>{sqlCalls++;throw Error("unexpected_db_io");}};
+   await assert.rejects(appendBlockedV2ReviewEvidence({
+     pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+     requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+     evidenceSha256:"b".repeat(64),resolveOperator
+   }),/invalid_review_auth_clock/);
+   assert.equal(grantCalls,0);
+   assert.equal(sqlCalls,0);
+ }
+});
