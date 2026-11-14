@@ -61,7 +61,7 @@ test("uniquely discovered session is reverified before atomic binding",async()=>
   assert.deepEqual(await run(f),{orderId,sessionId,action:"bound"});
   assert.equal(f.calls.filter(x=>x==="retrieve").length,2);
   assert.equal(f.calls.filter(x=>x==="account").length,2);
-  assert.deepEqual(f.calls.slice(-7),["BEGIN","lock","updateOrder","updateJournal","COMMIT","release"].slice(-7)); // connect precedes transaction
+  assert.deepEqual(f.calls.slice(-7),["connect","BEGIN","lock","updateOrder","updateJournal","COMMIT","release"]);
 });
 test("zero or multiple matches never bind or create Checkout",async()=>{
   for(const pages of [
