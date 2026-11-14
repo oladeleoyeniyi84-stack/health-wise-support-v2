@@ -18,7 +18,9 @@ export function createIsolatedSandboxWebhookServer({stripe,repository,endpointSe
   if(path!=="/sandbox/webhook")return reply(res,404,{error:"not_found"});
   if(req.method!=="POST"){res.setHeader("Allow","POST");return reply(res,405,{error:"method_not_allowed"});}
   const signature=req.headers["stripe-signature"];
-  if(typeof signature!=="string"||!signature)return reply(res,400,{error:"signature_required"});
+  if(typeof signature!=="string"||!signature||signature.length>8192)return reply(res,400,{error:"signature_required"});
+  const contentType=req.headers["content-type"];
+  if(typeof contentType!=="string"||contentType.split(";")[0].trim().toLowerCase()!=="application/json")return reply(res,415,{error:"unsupported_content_type"});
   const declared=Number(req.headers["content-length"]);
   if(req.headers["content-length"]!==undefined&&(!Number.isSafeInteger(declared)||declared<0||declared>MAX_BODY_BYTES))return reply(res,413,{error:"payload_too_large"});
   let chunks=[],size=0;
