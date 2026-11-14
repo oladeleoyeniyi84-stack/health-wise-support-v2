@@ -60,7 +60,7 @@ try {
     await setup.query("INSERT INTO accounts(id,provider_subject) VALUES ($1,'synthetic_member')",[accountId]);
   } finally {setup.release();}
   pool=new Pool({connectionString,max:5,connectionTimeoutMillis:3000,options:"-c search_path="+schema});
-  const now=new Date();
+  // Capture the search clock AFTER all attempt journal timestamps exist.
   for(let i=0;i<orders.length;i++){
     const id=orders[i];
     await pool.query(
@@ -69,6 +69,7 @@ try {
     );
     await reserveSandboxCheckoutAttempt({pool,orderId:id,priceId:price.priceId,idempotencyKey:"healthwise_discovery_unique_"+i+"_123456"});
   }
+  const now=new Date();
   const recover=(id,opts={})=>recoverDiscoveredV2SandboxSession({
     stripe:fakeStripe(id,opts),pool,orderId:id,now,maxPages:1
   });
