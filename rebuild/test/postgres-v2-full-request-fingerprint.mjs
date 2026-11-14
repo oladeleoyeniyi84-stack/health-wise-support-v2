@@ -6,6 +6,7 @@ import { assertDisposableDatabase } from "./support/disposable-db-guard.mjs";
 import { makeV2CheckoutRequestSnapshot,persistV2CheckoutRequestSnapshot } from "../src/integrations/stripe-v2-request-snapshot.mjs";
 import { makeV2FullCheckoutRequestFingerprint,persistV2FullCheckoutRequestFingerprint } from "../src/integrations/stripe-v2-full-request-fingerprint.mjs";
 import { auditLockedV2CheckoutRequest } from "../src/integrations/stripe-v2-locked-request-audit.mjs";
+import { claimBlockedV2CheckoutDispatch, inspectBlockedV2Dispatch } from "../src/integrations/stripe-v2-blocked-dispatch-ledger.mjs";
 
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const schema="hw_full_req_"+process.pid;
@@ -27,7 +28,7 @@ try{
     await setup.query('SET search_path TO "'+schema+'",public');
     for(const filename of ["001_foundation.sql","002_sandbox_checkout_attempts.sql",
       "003_immutable_order_ownership.sql","004_checkout_request_snapshots.sql",
-      "005_checkout_full_request_fingerprint.sql"]){
+      "005_checkout_full_request_fingerprint.sql", "006_checkout_dispatch_ledger.sql"]){
       const sql=await readFile(new URL("../db/"+filename,import.meta.url),"utf8");
       await setup.query(sql.replace(/^BEGIN;\s*/m,"").replace(/\s*COMMIT;\s*$/m,""));
     }
@@ -47,6 +48,38 @@ try{
   assert.equal(verified.action,"audit_verified_only");
   assert.equal(verified.providerWriteAuthorized,false);
   assert.equal(verified.release,"blocked");
+  // Two workers racing for the same order may claim uncertainty ONCE.
+  const claims=await Promise.allSettled([
+    claimBlockedV2CheckoutDispatch({
+      ...auditInput,now:new Date()
+    }),
+    claimBlockedV2CheckoutDispatch({
+      ...auditInput,now:new Date()
+    })
+  ]);
+  assert.equal(claims.filter(x=>x.status==="fulfilled").length,1);
+  assert.equal(claims.filter(x=>x.status==="rejected").length,1);
+  assert.match(String(claims.find(x=>x.status==="rejected").reason),/dispatch_already_claimed_requires_review/);
+  assert.equal(claims.find(x=>x.status==="fulfilled").value.providerWriteAuthorized,false);
+  assert.equal(claims.find(x=>x.status==="fulfilled").value.retryAllowed,false);
+  assert.equal((await inspectBlockedV2Dispatch({pool,orderId})).retryAllowed,false);
+  const ledger=await pool.query("SELECT state,request_sha256 FROM sandbox_checkout_dispatch_ledger WHERE order_id=$1",[orderId]);
+  assert.equal(ledger.rowCount,1);
+  assert.equal(ledger.rows[0].state,"outcome_uncertain");
+  await assert.rejects(
+    pool.query("DELETE FROM sandbox_checkout_dispatch_ledger WHERE order_id=$1",[orderId]),
+    /dispatch_ledger_delete_forbidden/
+  );
+  await assert.rejects(
+    pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='outcome_uncertain' WHERE order_id=$1",[orderId]),
+    /dispatch_ledger_immutable/
+  );
+  await pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='manual_review',reviewed_at=now() WHERE order_id=$1",[orderId]);
+  await assert.rejects(
+    pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='outcome_uncertain',reviewed_at=NULL WHERE order_id=$1",[orderId]),
+    /dispatch_ledger_immutable/
+  );
+  assert.equal((await inspectBlockedV2Dispatch({pool,orderId})).retryAllowed,false);
   const old=makeV2FullCheckoutRequestFingerprint(input);
   const row=await pool.query("SELECT request_sha256,success_url,cancel_url FROM sandbox_checkout_full_requests WHERE order_id=$1",[orderId]);
   assert.equal(row.rowCount,1);
