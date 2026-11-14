@@ -7,6 +7,7 @@ import { makeV2CheckoutRequestSnapshot,persistV2CheckoutRequestSnapshot } from "
 import { makeV2FullCheckoutRequestFingerprint,persistV2FullCheckoutRequestFingerprint } from "../src/integrations/stripe-v2-full-request-fingerprint.mjs";
 import { auditLockedV2CheckoutRequest } from "../src/integrations/stripe-v2-locked-request-audit.mjs";
 import { claimBlockedV2CheckoutDispatch, inspectBlockedV2Dispatch } from "../src/integrations/stripe-v2-blocked-dispatch-ledger.mjs";
+import { appendBlockedV2ReviewEvidence } from "../src/integrations/stripe-v2-review-evidence.mjs";
 
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const schema="hw_full_req_"+process.pid;
@@ -28,7 +29,8 @@ try{
     await setup.query('SET search_path TO "'+schema+'",public');
     for(const filename of ["001_foundation.sql","002_sandbox_checkout_attempts.sql",
       "003_immutable_order_ownership.sql","004_checkout_request_snapshots.sql",
-      "005_checkout_full_request_fingerprint.sql", "006_checkout_dispatch_ledger.sql"]){
+      "005_checkout_full_request_fingerprint.sql", "006_checkout_dispatch_ledger.sql",
+      "007_checkout_review_evidence.sql"]){
       const sql=await readFile(new URL("../db/"+filename,import.meta.url),"utf8");
       await setup.query(sql.replace(/^BEGIN;\s*/m,"").replace(/\s*COMMIT;\s*$/m,""));
     }
@@ -74,12 +76,36 @@ try{
     pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='outcome_uncertain' WHERE order_id=$1",[orderId]),
     /dispatch_ledger_immutable/
   );
+
+  const evidence={
+    pool,orderId,requestSha256:ledger.rows[0].request_sha256,
+    evidenceKind:"provider_lookup_incomplete",evidenceSha256:"c".repeat(64),
+    recordedBy:"synthetic_reviewer"
+  };
+  assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_recorded");
+  assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_already_recorded");
+  await assert.rejects(appendBlockedV2ReviewEvidence({
+    ...evidence,requestSha256:"f".repeat(64)
+  }),/review_evidence_conflict/);
+  await assert.rejects(pool.query(
+    "UPDATE sandbox_checkout_review_evidence SET evidence_sha256=$2 WHERE order_id=$1",
+    [orderId,"d".repeat(64)]
+  ),/review_evidence_immutable/);
+  await assert.rejects(pool.query(
+    "DELETE FROM sandbox_checkout_review_evidence WHERE order_id=$1",[orderId]
+  ),/review_evidence_immutable/);
   await pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='manual_review',reviewed_at=now() WHERE order_id=$1",[orderId]);
   await assert.rejects(
     pool.query("UPDATE sandbox_checkout_dispatch_ledger SET state='outcome_uncertain',reviewed_at=NULL WHERE order_id=$1",[orderId]),
     /dispatch_ledger_immutable/
   );
   assert.equal((await inspectBlockedV2Dispatch({pool,orderId})).retryAllowed,false);
+  assert.equal((await appendBlockedV2ReviewEvidence({
+    ...evidence,evidenceKind:"manual_escalation",evidenceSha256:"e".repeat(64)
+  })).action,"evidence_recorded");
+  assert.equal((await pool.query(
+    "SELECT COUNT(*)::int AS n FROM sandbox_checkout_review_evidence WHERE order_id=$1",[orderId]
+  )).rows[0].n,2);
   const old=makeV2FullCheckoutRequestFingerprint(input);
   const row=await pool.query("SELECT request_sha256,success_url,cancel_url FROM sandbox_checkout_full_requests WHERE order_id=$1",[orderId]);
   assert.equal(row.rowCount,1);
