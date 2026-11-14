@@ -76,8 +76,8 @@ export async function claimBlockedV2CheckoutDispatch({
       throw new Error("dispatch_context_mismatch");
     assertFreshPreparedSandboxAttempt({createdAt:r.journal_created,now});
     const inserted=await client.query(
-      `INSERT INTO sandbox_checkout_dispatch_ledger(order_id,request_sha256)
-         VALUES ($1,$2)
+      `INSERT INTO sandbox_checkout_dispatch_ledger(order_id,request_sha256,state)
+         VALUES ($1,$2,'outcome_uncertain')
        ON CONFLICT(order_id) DO NOTHING
        RETURNING order_id`,[t.orderId,fp.requestSha256]
     );
