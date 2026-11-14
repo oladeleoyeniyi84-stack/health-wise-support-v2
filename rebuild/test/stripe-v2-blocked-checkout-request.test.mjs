@@ -43,7 +43,6 @@ test("tampering owner, price, currency, quantity, mode, key or fingerprint is re
 });
 test("unapproved, local, Replit, HTTP and injection-prone origins fail closed",()=>{
   for(const origin of [
-    "https://evil.example.net",
     "http://sandbox.example.net",
     "https://sandbox.example.net:8443",
     "https://sandbox.example.net/path",
@@ -57,6 +56,11 @@ test("unapproved, local, Replit, HTTP and injection-prone origins fail closed",(
       ...args,returnOrigin:origin,approvedReturnOrigin:origin
     }),/checkout_origin_not_approved/);
   }
+  // An attacker-chosen but otherwise well-formed HTTPS origin is rejected
+  // when it disagrees with the independent server-owned approved origin.
+  assert.throws(()=>buildBlockedV2CheckoutRequest({
+    ...args,returnOrigin:"https://evil.example.net"
+  }),/checkout_origin_not_approved/);
   assert.throws(()=>buildBlockedV2CheckoutRequest({
     ...args,approvedReturnOrigin:"https://unrelated.example.net"
   }),/checkout_origin_not_approved/);
