@@ -84,3 +84,48 @@ test("revoked grant results in no SQL calls",async()=>{
  }),/review_operator_forbidden/);
  assert.equal(calls,0);
 });
+
+test("permission revocation is rechecked on every evidence write",async()=>{
+ let active=true;
+ let grantLookups=0;
+ let sqlCalls=0;
+ const resolveOperator=createTrustedV2ReviewOperatorResolver({
+   loadVerifiedServerSession:async()=>goodSession(),
+   lookupActiveReviewGrant:async id=>{
+     grantLookups++;
+     return {...goodGrant(id),active};
+   },
+   now:()=>time
+ });
+ const pool={query:async()=>{
+   sqlCalls++;
+   return {rowCount:1,rows:[{evidence_id:"synthetic-evidence"}]};
+ }};
+ const request={
+   pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+   requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+   evidenceSha256:"b".repeat(64),resolveOperator
+ };
+ const accepted=await appendBlockedV2ReviewEvidence(request);
+ assert.equal(accepted.action,"evidence_recorded");
+ assert.equal(sqlCalls,1);
+ active=false;
+ await assert.rejects(appendBlockedV2ReviewEvidence(request),/review_operator_forbidden/);
+ assert.equal(grantLookups,2,"must not reuse a cached permission grant");
+ assert.equal(sqlCalls,1,"revoked reviewer must not reach the database");
+});
+test("reviewer grant lookup failure cannot write evidence",async()=>{
+ let sqlCalls=0;
+ const resolveOperator=createTrustedV2ReviewOperatorResolver({
+   loadVerifiedServerSession:async()=>goodSession(),
+   lookupActiveReviewGrant:async()=>{throw new Error("grant_store_unavailable");},
+   now:()=>time
+ });
+ const pool={query:async()=>{sqlCalls++;throw Error("unexpected_db_io");}};
+ await assert.rejects(appendBlockedV2ReviewEvidence({
+   pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+   requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+   evidenceSha256:"b".repeat(64),resolveOperator
+ }),/grant_store_unavailable/);
+ assert.equal(sqlCalls,0);
+});
