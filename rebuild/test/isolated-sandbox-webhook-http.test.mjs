@@ -98,7 +98,7 @@ test("slow incomplete body times out without calling signature verifier or datab
   const {request}=await import("node:http");
   const target=new URL(url);
   const result=await new Promise((resolve,reject)=>{
-   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-length":"20"}},res=>{
+   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-type":"application/json","content-length":"20"}},res=>{
     let data="";res.setEncoding("utf8");res.on("data",chunk=>{data+=chunk;});
     res.on("end",()=>{req.destroy();resolve({status:res.statusCode,data});});
    });
