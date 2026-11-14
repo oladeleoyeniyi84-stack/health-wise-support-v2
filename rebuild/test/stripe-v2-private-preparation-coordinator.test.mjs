@@ -12,8 +12,8 @@ function fixture({owner="member-123",active=false,status="pending"}={}){
   let journal=null;
   const pool={query:async(sql,params)=>{
     if(sql.includes("JOIN accounts a")) {
-      calls.push("owner");
-      return {rowCount:1,rows:[{id:orderId,status:saved.status,stripe_session_id:null,provider_subject:owner}]};
+      calls.push(sql.includes("FOR UPDATE OF o") ? "locked_owner" : "owner");
+      return {rowCount:1,rows:[{...saved,id:orderId,status:saved.status,stripe_session_id:null,provider_subject:owner}]};
     }
     if(sql.startsWith("SELECT id, consultation_key")) {
       calls.push("order");
@@ -34,8 +34,10 @@ function fixture({owner="member-123",active=false,status="pending"}={}){
         idempotency_key:journal.idempotency_key,state:"prepared",attempt_session:null,
         attempt_price:item.priceId,created_at:journal.created_at}]};
     }
+    if(["BEGIN","COMMIT","ROLLBACK"].includes(sql)) {calls.push(sql);return {rowCount:0,rows:[]};}
     throw Error("unexpected_sql");
   }};
+  pool.connect=async()=>({query:(...args)=>pool.query(...args),release:()=>{calls.push("release");}});
   const stripe={
     accounts:{retrieve:async()=>{calls.push("stripe_account");return {object:"account",id:HEALTHWISE_V2_SANDBOX_ACCOUNT};}},
     balance:{retrieve:async()=>({object:"balance",livemode:false})},
@@ -48,7 +50,7 @@ function fixture({owner="member-123",active=false,status="pending"}={}){
     stripe,pool,orderId,resolvePrincipal:async()=>({authenticated:true,providerSubject:subject}),
     serverKeySecret:secret,...overrides
   });
-  return {run,calls,attempts};
+  return {run,calls,attempts,pool,saved};
 }
 test("inactive catalog rejects before reservation or any Checkout creation",async()=>{
   const f=fixture();
@@ -93,4 +95,18 @@ test("nonpending order rejected before provider lookup",async()=>{
   const f=fixture({active:true,status:"paid"});
   await assert.rejects(f.run(),/checkout_order_not_eligible/);
   assert.deepEqual(f.calls,["owner"]);
+});
+
+test("reassignment after initial ownership check is rejected under final lock",async()=>{
+  const f=fixture({active:true});
+  const initial=f.pool.query;
+  f.pool.query=async(sql,params)=>{
+    if(sql.includes("FOR UPDATE OF o")) {
+      return {rowCount:1,rows:[{...f.saved,provider_subject:"reassigned_member"}]};
+    }
+    return initial(sql,params);
+  };
+  await assert.rejects(f.run(),/checkout_owner_mismatch/);
+  assert.equal(f.attempts.length,0);
+  assert.ok(f.calls.includes("ROLLBACK"));
 });
