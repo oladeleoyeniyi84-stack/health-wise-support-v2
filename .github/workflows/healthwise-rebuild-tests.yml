@@ -73,6 +73,11 @@ jobs:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
           HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
         run: node test/postgres-known-session-recovery.mjs
+      - name: Verify full discovery-to-recovery using disposable PostgreSQL
+        env:
+          HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
+          HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
+        run: node test/postgres-discovered-session-recovery.mjs
   disposable-restore:
     runs-on: ubuntu-latest
     timeout-minutes: 5
