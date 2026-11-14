@@ -8,6 +8,7 @@ import { makeV2FullCheckoutRequestFingerprint,persistV2FullCheckoutRequestFinger
 import { auditLockedV2CheckoutRequest } from "../src/integrations/stripe-v2-locked-request-audit.mjs";
 import { claimBlockedV2CheckoutDispatch, inspectBlockedV2Dispatch } from "../src/integrations/stripe-v2-blocked-dispatch-ledger.mjs";
 import { appendBlockedV2ReviewEvidence } from "../src/integrations/stripe-v2-review-evidence.mjs";
+import {createTrustedV2ReviewOperatorResolver} from "../src/integrations/stripe-v2-trusted-review-operator.mjs";
 
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const schema="hw_full_req_"+process.pid;
@@ -80,7 +81,15 @@ try{
   const evidence={
     pool,orderId,requestSha256:ledger.rows[0].request_sha256,
     evidenceKind:"provider_lookup_incomplete",evidenceSha256:"c".repeat(64),
-    resolveOperator:async()=>({authenticated:true,id:"synthetic_reviewer",permissions:["healthwise.checkout.review_evidence"]})
+    resolveOperator:createTrustedV2ReviewOperatorResolver({
+      loadVerifiedServerSession:async()=>({
+        verifiedByServer:true,revoked:false,operatorId:"synthetic_reviewer",
+        expiresAt:new Date(Date.now()+60000)
+      }),
+      lookupActiveReviewGrant:async operatorId=>({
+        operatorId,active:true,permission:"healthwise.checkout.review_evidence"
+      })
+    })
   };
   assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_recorded");
   assert.equal((await appendBlockedV2ReviewEvidence(evidence)).action,"evidence_already_recorded");
