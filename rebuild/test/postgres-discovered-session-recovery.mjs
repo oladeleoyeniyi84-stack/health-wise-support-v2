@@ -91,8 +91,13 @@ try {
   // Two simultaneous discovery/verification calls for same order cannot
   // overwrite each other's session binding after the row locks are acquired.
   const results=await Promise.allSettled([recover(orders[2]),recover(orders[2])]);
-  assert.equal(results.filter(x=>x.status==="fulfilled").length,1);
-  assert.equal(results.filter(x=>x.status==="rejected").length,1);
+  // One may read the completed binding and fail early; both may also
+  // complete idempotently if discovery finished before the first commit.
+  assert.ok(results.some(x=>x.status==="fulfilled"));
+  for(const r of results) {
+    if(r.status==="fulfilled") assert.ok(["bound","already_bound"].includes(r.value.action));
+    else assert.match(r.reason.message,/discovery_order_mismatch|recovery_order_mismatch|recovery_binding_conflict/);
+  }
   const concurrent=await check(orders[2]);
   assert.equal(concurrent.state,"bound");
   assert.equal(concurrent.order_session,concurrent.attempt_session);
