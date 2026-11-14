@@ -17,7 +17,7 @@ function harness({outage=false,invalidSignature=false}={}){
  const repository={findOrderBySession:async()=>order,transaction:async fn=>{transactions++;return fn({lockOrderBySession:async()=>order,recordEventOnce:async()=>{if(seen)return false;seen=true;return true;},applyDecision:async d=>{if(d.action==="mark_paid")applied++;}});}};
  return {stripe,repository,endpointSecret:"whsec_test",stats:()=>({verified,lookups,transactions,applied})};
 }
-const post=(url,body="signed-raw",headers={})=>fetch(url,{method:"POST",headers:{"stripe-signature":"valid",...headers},body});
+const post=(url,body="signed-raw",headers={})=>fetch(url,{method:"POST",headers:{"stripe-signature":"valid","content-type":"application/json",...headers},body});
 test("isolated route preserves raw bytes and idempotent redelivery",async()=>{
  const h=harness();
  await withServer(h,async url=>{
@@ -41,7 +41,7 @@ test("missing signature, wrong method, oversized declared body and unknown route
  await withServer(h,async url=>{
   assert.equal((await fetch(url,{method:"GET"})).status,405);
   assert.equal((await fetch(url,{method:"POST",body:"signed-raw"})).status,400);
-  assert.equal((await fetch(url,{method:"POST",headers:{"stripe-signature":"valid"},body:"x".repeat(262145)})).status,413);
+  assert.equal((await fetch(url,{method:"POST",headers:{"stripe-signature":"valid","content-type":"application/json"},body:"x".repeat(262145)})).status,413);
   assert.equal((await fetch(url.replace("/sandbox/webhook","/api/checkout"))).status,404);
  });
  assert.deepEqual(h.stats(),{verified:0,lookups:0,transactions:0,applied:0});
@@ -69,7 +69,7 @@ test("incomplete HTTP body never invokes payment reconciliation",async()=>{
   const {request}=await import("node:http");
   const target=new URL(url);
   await new Promise((resolve,reject)=>{
-   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-length":"20"}});
+   const req=request({hostname:target.hostname,port:target.port,path:target.pathname,method:"POST",headers:{"stripe-signature":"valid","content-type":"application/json","content-length":"20"}});
    req.on("error",err=>{if(err.code==="ECONNRESET"||err.code==="EPIPE")resolve();else reject(err);});
    req.on("response",res=>{res.resume();res.on("end",resolve);});
    req.flushHeaders();
@@ -85,7 +85,7 @@ test("incomplete HTTP body never invokes payment reconciliation",async()=>{
 test("oversized streamed chunked body fails before signature verification and reconciliation",async()=>{
  const h=harness();
  await withServer(h,async url=>{
-  const response=await fetch(url,{method:"POST",headers:{"stripe-signature":"valid"},body:new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode("x".repeat(262145)));controller.close();}}),duplex:"half"});
+  const response=await fetch(url,{method:"POST",headers:{"stripe-signature":"valid","content-type":"application/json"},body:new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode("x".repeat(262145)));controller.close();}}),duplex:"half"});
   assert.equal(response.status,413);
   assert.equal((await response.json()).error,"payload_too_large");
  });
