@@ -129,3 +129,42 @@ test("reviewer grant lookup failure cannot write evidence",async()=>{
  }),/grant_store_unavailable/);
  assert.equal(sqlCalls,0);
 });
+
+test("session expiry between sequential evidence writes fails closed before grant or SQL",async()=>{
+ let clock=new Date(time);
+ let grantCalls=0;
+ let sqlCalls=0;
+ const resolveOperator=createTrustedV2ReviewOperatorResolver({
+   loadVerifiedServerSession:async()=>goodSession(),
+   lookupActiveReviewGrant:async id=>{grantCalls++;return goodGrant(id);},
+   now:()=>clock
+ });
+ const pool={query:async()=>{sqlCalls++;return {rowCount:1,rows:[{evidence_id:"synthetic-evidence"}]};}};
+ const request={
+   pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+   requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+   evidenceSha256:"b".repeat(64),resolveOperator
+ };
+ assert.equal((await appendBlockedV2ReviewEvidence(request)).action,"evidence_recorded");
+ clock=new Date(time.getTime()+60000);
+ await assert.rejects(appendBlockedV2ReviewEvidence(request),/review_operator_forbidden/);
+ assert.equal(grantCalls,1,"expired session must not reach grant lookup");
+ assert.equal(sqlCalls,1,"expired session must not reach SQL");
+});
+test("server-session lookup failure fails closed before grant or SQL",async()=>{
+ let grantCalls=0;
+ let sqlCalls=0;
+ const resolveOperator=createTrustedV2ReviewOperatorResolver({
+   loadVerifiedServerSession:async()=>{throw new Error("session_store_unavailable");},
+   lookupActiveReviewGrant:async()=>{grantCalls++;return goodGrant("staff_reviewer");},
+   now:()=>time
+ });
+ const pool={query:async()=>{sqlCalls++;throw Error("unexpected_db_io");}};
+ await assert.rejects(appendBlockedV2ReviewEvidence({
+   pool,orderId:"123e4567-e89b-42d3-a456-426614174000",
+   requestSha256:"a".repeat(64),evidenceKind:"manual_escalation",
+   evidenceSha256:"b".repeat(64),resolveOperator
+ }),/session_store_unavailable/);
+ assert.equal(grantCalls,0);
+ assert.equal(sqlCalls,0);
+});
