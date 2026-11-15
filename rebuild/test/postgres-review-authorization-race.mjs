@@ -92,11 +92,20 @@ try{
  await pool.query("UPDATE sandbox_review_sessions SET expires_at=now()+interval '1 hour',operator_id='different_staff' WHERE session_id=$1",[sessionId]);
  await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
  await pool.query("UPDATE sandbox_review_sessions SET operator_id=$2 WHERE session_id=$1",[sessionId,operatorId]);
- await pool.query("DELETE FROM sandbox_review_grants WHERE operator_id=$1",[operatorId]);
+ // DELETE would bypass the serialized revocation contract; reject it.
+ await assert.rejects(
+  pool.query("DELETE FROM sandbox_review_grants WHERE operator_id=$1",[operatorId]),
+  /review_auth_delete_forbidden/
+ );
+ await assert.rejects(
+  pool.query("DELETE FROM sandbox_review_sessions WHERE session_id=$1",[sessionId]),
+  /review_auth_delete_forbidden/
+ );
+ await pool.query("UPDATE sandbox_review_grants SET active=false WHERE operator_id=$1",[operatorId]);
  await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
  assert.equal(forbiddenWrites,0,"denied reviewer must never reach evidence callback");
  // A failed authorization must release its transaction and connection.
- await pool.query("INSERT INTO sandbox_review_grants(operator_id,permission,active) VALUES($1,$2,true)",[operatorId,permission]);
+ await pool.query("UPDATE sandbox_review_grants SET active=true WHERE operator_id=$1",[operatorId]);
  await withLockedReviewAuthorization(async({operator})=>{
   assert.equal(operator.id,operatorId);
  });
