@@ -84,6 +84,22 @@ try{
  }),/synthetic_evidence_failure/);
  const rolledBack=await pool.query("SELECT count(*)::int AS n FROM review_test_writes WHERE id=99");
  assert.equal(rolledBack.rows[0].n,0);
+ // Fail closed on expired sessions, changed server-owned operator, and missing grants.
+ await pool.query("UPDATE sandbox_review_sessions SET expires_at=now()-interval '1 minute' WHERE session_id=$1",[sessionId]);
+ let forbiddenWrites=0;
+ const neverWrite=async()=>{forbiddenWrites++;};
+ await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
+ await pool.query("UPDATE sandbox_review_sessions SET expires_at=now()+interval '1 hour',operator_id='different_staff' WHERE session_id=$1",[sessionId]);
+ await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
+ await pool.query("UPDATE sandbox_review_sessions SET operator_id=$2 WHERE session_id=$1",[sessionId,operatorId]);
+ await pool.query("DELETE FROM sandbox_review_grants WHERE operator_id=$1",[operatorId]);
+ await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
+ assert.equal(forbiddenWrites,0,"denied reviewer must never reach evidence callback");
+ // A failed authorization must release its transaction and connection.
+ await pool.query("INSERT INTO sandbox_review_grants(operator_id,permission,active) VALUES($1,$2,true)",[operatorId,permission]);
+ await withLockedReviewAuthorization(async({operator})=>{
+  assert.equal(operator.id,operatorId);
+ });
  console.log("PASS: disposable PostgreSQL serializes reviewer evidence and grant revocation in both orderings");
 }finally{
  await pool.end();
