@@ -15,4 +15,19 @@ CREATE TABLE sandbox_review_grants (
  active boolean NOT NULL DEFAULT false,
  PRIMARY KEY(operator_id,permission)
 );
+-- Deletion bypasses the revocation lock protocol and is forbidden.
+-- Administrators must revoke with UPDATE; retention cleanup needs a
+-- separately reviewed, offline procedure outside the active write path.
+CREATE FUNCTION healthwise_reject_review_auth_delete()
+RETURNS trigger LANGUAGE plpgsql AS $review_auth_guard$
+BEGIN
+ RAISE EXCEPTION 'review_auth_delete_forbidden' USING ERRCODE='23514';
+END;
+$review_auth_guard$;
+CREATE TRIGGER healthwise_review_session_no_delete
+BEFORE DELETE ON sandbox_review_sessions
+FOR EACH ROW EXECUTE FUNCTION healthwise_reject_review_auth_delete();
+CREATE TRIGGER healthwise_review_grant_no_delete
+BEFORE DELETE ON sandbox_review_grants
+FOR EACH ROW EXECUTE FUNCTION healthwise_reject_review_auth_delete();
 COMMIT;
