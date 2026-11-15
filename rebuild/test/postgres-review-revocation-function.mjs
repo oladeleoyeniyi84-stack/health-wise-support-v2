@@ -69,6 +69,35 @@ try {
  assert.equal(state.rows[0].active,false);
  const sessions=await admin.query("SELECT revoked FROM "+q(schema)+".sandbox_review_sessions");
  assert.equal(sessions.rows[0].revoked,true);
+ // Separate connections: revocation must wait for a cooperating authorization transaction.
+ const raceOperator="race_"+suffix,raceSession="race_session_"+suffix;
+ await admin.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES($1,$2,false,now()+interval '1 hour')",[raceSession,raceOperator]);
+ await admin.query("INSERT INTO "+q(schema)+".sandbox_review_grants VALUES($1,$2,true)",[raceOperator,"healthwise.checkout.review_evidence"]);
+ const holder=await admin.connect();
+ const challenger=await revokerPool.connect();
+ try {
+  await holder.query("BEGIN");
+  await holder.query("SELECT pg_advisory_xact_lock(720360,1)");
+  await challenger.query("SET statement_timeout = '250ms'");
+  await assert.rejects(
+   challenger.query("SELECT "+functionName+"($1,$2)",[raceOperator,raceSession]),
+   e=>e.code==="57014",
+   "revocation must block while a cooperating transaction holds the lock"
+  );
+  const pending=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants WHERE operator_id=$1",[raceOperator]);
+  assert.equal(pending.rows[0].active,true,"timed-out revocation must not partially change the grant");
+  await holder.query("COMMIT");
+  await challenger.query("RESET statement_timeout");
+  const done=await challenger.query("SELECT "+functionName+"($1,$2) AS revoked",[raceOperator,raceSession]);
+  assert.equal(done.rows[0].revoked,true);
+  const after=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants WHERE operator_id=$1",[raceOperator]);
+  assert.equal(after.rows[0].active,false);
+ } finally {
+  await holder.query("ROLLBACK").catch(()=>{});
+  await challenger.query("RESET statement_timeout").catch(()=>{});
+  holder.release();challenger.release();
+ }
+ console.log("PASS: cooperating revocation serializes against a separate advisory-lock holder");
  console.log("PASS: disposable SECURITY DEFINER owner, ACL, revoker-only execution and fail-closed revocation");
 } finally {
  if(writerPool)await writerPool.end();
