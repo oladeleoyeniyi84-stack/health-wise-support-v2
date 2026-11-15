@@ -9,14 +9,17 @@ const admin=new Pool({connectionString:url,max:3});
 const suffix=randomBytes(5).toString("hex");
 const schema="hw_fn_"+suffix,owner="hw_fn_owner_"+suffix,writer="hw_fn_writer_"+suffix,revoker="hw_fn_revoker_"+suffix;
 const q=s=>'"'+s.replaceAll('"','""')+'"';
-const pw=randomBytes(24).toString("hex");
+// Separate disposable credentials prevent writer-to-revoker authentication.
+const writerPassword=randomBytes(24).toString("hex");
+const revokerPassword=randomBytes(24).toString("hex");
+assert.notEqual(writerPassword,revokerPassword);
 let schemaMade=false;
 const roles=[];
 const session="session_"+suffix,operator="reviewer_"+suffix;
 let writerPool,revokerPool;
 try {
  for(const [role,login] of [[owner,false],[writer,true],[revoker,true]]){
-  await admin.query("CREATE ROLE "+q(role)+(login?" LOGIN PASSWORD '"+pw+"'":" NOLOGIN"));
+  await admin.query("CREATE ROLE "+q(role)+(login?" LOGIN PASSWORD '"+(role===writer?writerPassword:revokerPassword)+"'":" NOLOGIN"));
   roles.push(role);
  }
  await admin.query("CREATE SCHEMA "+q(schema)+" AUTHORIZATION "+q(owner));schemaMade=true;
@@ -61,10 +64,20 @@ try {
  assert.equal(schemaRights.rows[0].writer_create,false);
  assert.equal(schemaRights.rows[0].revoker_create,false);
  const loginPool=role=>{
-  const u=new URL(url);u.username=role;u.password=pw;
+  const u=new URL(url);u.username=role;u.password=role===writer?writerPassword:revokerPassword;
   return new Pool({connectionString:u.toString(),max:1});
  };
  writerPool=loginPool(writer);revokerPool=loginPool(revoker);
+ // An evidence-writer password must not authenticate as the revoker role.
+ const crossLoginUrl=new URL(url);
+ crossLoginUrl.username=revoker;
+ crossLoginUrl.password=writerPassword;
+ const crossLogin=new Pool({connectionString:crossLoginUrl.toString(),max:1,connectionTimeoutMillis:1500});
+ try {
+  await assert.rejects(crossLogin.query("SELECT current_user"),e=>e.code==="28P01");
+ } finally {
+  await crossLogin.end();
+ }
  await assert.rejects(writerPool.query("SELECT "+functionName+"($1,$2)",[operator,session]),e=>e.code==="42501");
  await assert.rejects(writerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
  await assert.rejects(revokerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
@@ -160,7 +173,7 @@ try {
  await admin.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES($1,$2,false,now()+interval '1 hour')",[actualSession,actualOperator]);
  await admin.query("INSERT INTO "+q(schema)+".sandbox_review_grants VALUES($1,$2,true)",[actualOperator,"healthwise.checkout.review_evidence"]);
  const adapterUrl=new URL(url);
- adapterUrl.username=writer;adapterUrl.password=pw;
+ adapterUrl.username=writer;adapterUrl.password=writerPassword;
  adapterUrl.searchParams.set("options","-c search_path="+schema);
  const adapterPool=new Pool({connectionString:adapterUrl.toString(),max:2});
  try {
