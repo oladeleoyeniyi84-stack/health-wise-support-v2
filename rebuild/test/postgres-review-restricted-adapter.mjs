@@ -32,7 +32,7 @@ try{
  const withAuth=createPostgresLockedReviewAuthorization({
   pool:writer,useRowLocks:false,loadVerifiedServerSession:async()=>({verifiedByServer:true,sessionId,operatorId})
  });
- const result=await withAuth(async({client,operator})=>{
+ await assert.rejects(withAuth(async({client,operator})=>{
   assert.equal(operator.id,operatorId);
   await assert.rejects(client.query("UPDATE sandbox_review_grants SET active=false"),e=>e.code==="42501");
   // A failed statement aborts a transaction; callback must fail closed.
