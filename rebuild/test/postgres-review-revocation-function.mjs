@@ -63,7 +63,7 @@ try {
  await assert.rejects(revokerPool.query("SELECT "+functionName+"($1,$2)",["x",session]),/invalid_revocation_request/);
  let state=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants");
  assert.equal(state.rows[0].active,true);
- const result=await revokerPool.query("SELECT "+signature+"($1,$2) AS revoked",[operator,session]);
+ const result=await revokerPool.query("SELECT "+functionName+"($1,$2) AS revoked",[operator,session]);
  assert.equal(result.rows[0].revoked,true);
  state=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants");
  assert.equal(state.rows[0].active,false);
