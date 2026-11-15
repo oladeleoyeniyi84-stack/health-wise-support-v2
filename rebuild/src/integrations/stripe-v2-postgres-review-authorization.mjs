@@ -4,8 +4,8 @@
  * Revocation MUST update the same session/grant rows (and therefore take
  * conflicting row locks) in PostgreSQL. No public route or Stripe calls.
  */
-export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServerSession,now=()=>new Date()}={}){
- if(typeof pool?.connect!=="function" || typeof loadVerifiedServerSession!=="function" || typeof now!=="function")
+export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServerSession,now=()=>new Date(),useRowLocks=true}={}){
+ if(typeof pool?.connect!=="function" || typeof loadVerifiedServerSession!=="function" || typeof now!=="function" || typeof useRowLocks!=="boolean")
   throw new Error("review_auth_dependencies_required");
  return async function withLockedReviewAuthorization(callback){
   if(typeof callback!=="function")throw new Error("review_callback_required");
@@ -22,11 +22,12 @@ export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServer
    // Existing row locks are retained until admin and writer adapters both
    // use the same advisory-lock contract; no privilege change yet.
    await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
+   const lockClause=useRowLocks?" FOR UPDATE":"";
    const s=await client.query(
-    "SELECT operator_id,revoked,expires_at FROM sandbox_review_sessions WHERE session_id=$1 FOR UPDATE",
+    "SELECT operator_id,revoked,expires_at FROM sandbox_review_sessions WHERE session_id=$1"+lockClause,
     [session.sessionId]);
    const g=await client.query(
-    "SELECT active FROM sandbox_review_grants WHERE operator_id=$1 AND permission=$2 FOR UPDATE",
+    "SELECT active FROM sandbox_review_grants WHERE operator_id=$1 AND permission=$2"+lockClause,
     [session.operatorId,"healthwise.checkout.review_evidence"]);
    const clock=now();
    if(!(clock instanceof Date) || !Number.isFinite(clock.getTime()))
