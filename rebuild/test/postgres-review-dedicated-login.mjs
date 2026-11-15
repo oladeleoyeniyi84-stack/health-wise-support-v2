@@ -12,11 +12,8 @@ const password=randomBytes(24).toString("hex");
 const sessionId="login_session_01",operatorId="login_reviewer";
 let createdRole=false,createdSchema=false,writer;
 try{
- await admin.query("CREATE ROLE "+quote(role)+" LOGIN PASSWORD $1",[password]).catch(async e=>{
-  // PostgreSQL DDL does not accept parameter placeholders for role passwords.
-  if(e.code!=="42601")throw e;
-  await admin.query("CREATE ROLE "+quote(role)+" LOGIN PASSWORD '"+password+"'");
- });
+ // Random hex password is generated locally; never log or persist it.
+ await admin.query("CREATE ROLE "+quote(role)+" LOGIN PASSWORD '"+password+"'");
  createdRole=true;
  await admin.query("CREATE SCHEMA "+quote(schema));createdSchema=true;
  await admin.query("CREATE TABLE "+quote(schema)+".sandbox_review_sessions(session_id text PRIMARY KEY,operator_id text NOT NULL,revoked boolean NOT NULL,expires_at timestamptz NOT NULL)");
