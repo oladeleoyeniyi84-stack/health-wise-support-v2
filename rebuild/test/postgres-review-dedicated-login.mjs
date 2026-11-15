@@ -42,13 +42,24 @@ try{
   "CREATE TABLE "+quote(schema)+".forged(id text)",
   "ALTER TABLE sandbox_review_grants ADD COLUMN forged boolean",
   "DROP TABLE sandbox_review_sessions",
-  "GRANT SELECT ON sandbox_review_grants TO PUBLIC",
   "SELECT session_id FROM sandbox_review_sessions FOR UPDATE",
   "SET ROLE healthwise_test"
  ];
  for(const sql of denied){
   await assert.rejects(writer.query(sql),e=>["42501","0P000"].includes(e.code),sql);
  }
+ // PostgreSQL GRANT by a non-owner can return success with a WARNING and
+ // grant nothing. Verify effective privileges, not only SQLSTATE.
+ try {
+  await writer.query("GRANT SELECT ON sandbox_review_grants TO PUBLIC");
+ } catch(e) {
+  assert.ok(["42501","0LP01"].includes(e.code),e.message);
+ }
+ const publicGrant=await admin.query(
+  "SELECT has_table_privilege('public',$1,'SELECT') AS allowed",
+  [schema+".sandbox_review_grants"]
+ );
+ assert.equal(publicGrant.rows[0].allowed,false,"reviewer must not grant table access to PUBLIC");
  const result=await admin.query("SELECT revoked FROM "+quote(schema)+".sandbox_review_sessions");
  assert.equal(result.rows[0].revoked,false);
  console.log("PASS: dedicated non-superuser LOGIN runs actual adapter; mutation and escalation denied");
