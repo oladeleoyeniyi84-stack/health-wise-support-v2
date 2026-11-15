@@ -68,6 +68,37 @@ try {
  await assert.rejects(writerPool.query("SELECT "+functionName+"($1,$2)",[operator,session]),e=>e.code==="42501");
  await assert.rejects(writerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
  await assert.rejects(revokerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
+ // Revoker may execute only the reviewed function, not redefine it or
+ // modify its protected schema and underlying authorization state.
+ await assert.rejects(
+  revokerPool.query("CREATE TABLE "+q(schema)+".revoker_forged_table(id text)"),
+  e=>e.code==="42501"
+ );
+ await assert.rejects(
+  revokerPool.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES('forged_session','forged_user',false,now())"),
+  e=>e.code==="42501"
+ );
+ await assert.rejects(
+  revokerPool.query("UPDATE "+q(schema)+".sandbox_review_sessions SET revoked=true"),
+  e=>e.code==="42501"
+ );
+ await assert.rejects(
+  revokerPool.query("ALTER FUNCTION "+signature+" OWNER TO "+q(revoker)),
+  e=>e.code==="42501"
+ );
+ // PostgreSQL GRANT may only emit a warning for a non-grantor.
+ // Inspect the effective ACL after trying the operation.
+ try {
+  await revokerPool.query("GRANT EXECUTE ON FUNCTION "+signature+" TO "+q(writer));
+ } catch(error) {
+  assert.ok(["42501","0LP01"].includes(error.code),error.message);
+ }
+ const postGrant=await admin.query(
+  "SELECT has_function_privilege($1,p.oid,'EXECUTE') AS writer_execute FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$2 AND p.proname='sandbox_revoke_review_access'",
+  [writer,schema]
+ );
+ assert.equal(postGrant.rows[0].writer_execute,false,"revoker must not delegate execution to writer");
+
  await assert.rejects(revokerPool.query("SELECT "+functionName+"($1,$2)",["x",session]),/invalid_revocation_request/);
  let state=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants");
  assert.equal(state.rows[0].active,true);
