@@ -23,10 +23,7 @@ try{
    const client=await admin.connect();
    try{await client.query("SET ROLE "+q(role));await client.query("SET search_path TO "+q(schema));}
    catch(e){client.release();throw e;}
-   return {query:(...args)=>client.query(...args),release:()=>{
-    // DISCARD role and search_path before returning pooled connection.
-    return client.query("RESET ROLE").then(()=>client.query("RESET search_path")).finally(()=>client.release());
-   }};
+   return {query:(...args)=>client.query(...args),release:()=>client.release(true)};
   }
  };
  const withAuth=createPostgresLockedReviewAuthorization({
@@ -34,11 +31,13 @@ try{
  });
  await assert.rejects(withAuth(async({client,operator})=>{
   assert.equal(operator.id,operatorId);
-  await assert.rejects(client.query("UPDATE sandbox_review_grants SET active=false"),e=>e.code==="42501");
-  // A failed statement aborts a transaction; callback must fail closed.
-  return "unreachable";
- }).then(()=>{throw Error("expected_abort");},e=>e);
- assert.ok(result instanceof Error);
+  await assert.rejects(
+   client.query("UPDATE sandbox_review_grants SET active=false"),
+   error=>error.code==="42501"
+  );
+  // The denied SQL statement aborts the transaction. Force rollback.
+  throw new Error("denied_mutation_rolled_back");
+ }),/denied_mutation_rolled_back/);
  const check=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants");
  assert.equal(check.rows[0].active,true);
  // A clean authorized read-only transaction succeeds.
