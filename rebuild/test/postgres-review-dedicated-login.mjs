@@ -3,6 +3,7 @@ import {randomBytes} from "node:crypto";
 import {Pool} from "pg";
 import {assertDisposableDatabase} from "./support/disposable-db-guard.mjs";
 import {createPostgresLockedReviewAuthorization} from "../src/integrations/stripe-v2-postgres-review-authorization.mjs";
+import {revokeSandboxReviewerAccess} from "../src/integrations/stripe-v2-review-revocation.mjs";
 
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const admin=new Pool({connectionString:url,max:2});
@@ -71,6 +72,20 @@ try{
   [schema]
  );
  assert.equal(publicGrant.rows[0].allowed,false,"reviewer must not grant table access to PUBLIC");
+ // Even a forged positive administrator callback must not confer SQL UPDATE
+ // privileges on the dedicated evidence-writer LOGIN.
+ await assert.rejects(
+  revokeSandboxReviewerAccess({
+   pool:writer,operatorId,sessionId,
+   authorizeAdministrator:async()=>true
+  }),
+  error=>error.code==="42501"
+ );
+ const grantState=await admin.query(
+  "SELECT active FROM "+quote(schema)+".sandbox_review_grants WHERE operator_id=$1",
+  [operatorId]
+ );
+ assert.equal(grantState.rows[0].active,true);
  const result=await admin.query("SELECT revoked FROM "+quote(schema)+".sandbox_review_sessions");
  assert.equal(result.rows[0].revoked,false);
  console.log("PASS: dedicated non-superuser LOGIN runs actual adapter; mutation and escalation denied");
