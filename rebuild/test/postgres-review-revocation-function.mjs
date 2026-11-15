@@ -97,6 +97,53 @@ try {
   await challenger.query("RESET statement_timeout").catch(()=>{});
   holder.release();challenger.release();
  }
+ // Exercise the real SELECT-only authorization adapter against the revocation function.
+ const {createPostgresLockedReviewAuthorization}=await import("../src/integrations/stripe-v2-postgres-review-authorization.mjs");
+ const actualOperator="actual_"+suffix,actualSession="actual_session_"+suffix;
+ await admin.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES($1,$2,false,now()+interval '1 hour')",[actualSession,actualOperator]);
+ await admin.query("INSERT INTO "+q(schema)+".sandbox_review_grants VALUES($1,$2,true)",[actualOperator,"healthwise.checkout.review_evidence"]);
+ const adapterUrl=new URL(url);
+ adapterUrl.username=writer;adapterUrl.password=pw;
+ adapterUrl.searchParams.set("options","-c search_path="+schema);
+ const adapterPool=new Pool({connectionString:adapterUrl.toString(),max:2});
+ try {
+  const withAuthorization=createPostgresLockedReviewAuthorization({
+   pool:adapterPool,useRowLocks:false,
+   loadVerifiedServerSession:async()=>({verifiedByServer:true,sessionId:actualSession,operatorId:actualOperator})
+  });
+  let releaseCallback;
+  const callbackGate=new Promise(resolve=>{releaseCallback=resolve;});
+  let notifyEntered;
+  const entered=new Promise(resolve=>{notifyEntered=resolve;});
+  const inFlight=withAuthorization(async ({client,operator})=>{
+   assert.equal(operator.id,actualOperator);
+   await client.query("SELECT 1");
+   notifyEntered();
+   await callbackGate;
+  });
+  try {
+   await entered;
+   const blocked=await revokerPool.connect();
+   try {
+    await blocked.query("SET statement_timeout = '250ms'");
+    await assert.rejects(blocked.query("SELECT "+functionName+"($1,$2)",[actualOperator,actualSession]),e=>e.code==="57014");
+    const before=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants WHERE operator_id=$1",[actualOperator]);
+    assert.equal(before.rows[0].active,true);
+   } finally {
+    await blocked.query("RESET statement_timeout").catch(()=>{});
+    blocked.release();
+   }
+  } finally {
+   releaseCallback();
+   await inFlight;
+  }
+  const revoked=await revokerPool.query("SELECT "+functionName+"($1,$2) AS revoked",[actualOperator,actualSession]);
+  assert.equal(revoked.rows[0].revoked,true);
+  await assert.rejects(withAuthorization(async()=>{throw new Error("callback_must_not_run");}),/review_operator_forbidden/);
+  console.log("PASS: actual SELECT-only adapter holds lock through callback; post-revocation authorization denied");
+ } finally {
+  await adapterPool.end();
+ }
  console.log("PASS: cooperating revocation serializes against a separate advisory-lock holder");
  console.log("PASS: disposable SECURITY DEFINER owner, ACL, revoker-only execution and fail-closed revocation");
 } finally {
