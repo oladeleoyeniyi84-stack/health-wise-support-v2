@@ -40,6 +40,9 @@ try{
   "INSERT INTO sandbox_review_grants VALUES ('forged','healthwise.checkout.review_evidence',true)",
   "TRUNCATE sandbox_review_sessions",
   "CREATE TABLE "+quote(schema)+".forged(id text)",
+  "ALTER TABLE sandbox_review_grants ADD COLUMN forged boolean",
+  "DROP TABLE sandbox_review_sessions",
+  "GRANT SELECT ON sandbox_review_grants TO PUBLIC",
   "SELECT session_id FROM sandbox_review_sessions FOR UPDATE",
   "SET ROLE healthwise_test"
  ];
