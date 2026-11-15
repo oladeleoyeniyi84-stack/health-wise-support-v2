@@ -18,13 +18,12 @@ export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServer
   let begun=false;
   try{
    await client.query("BEGIN");begun=true;
-   // Both session and grant are locked until COMMIT. Revocation uses UPDATE
-   // on these rows, serializing with evidence insertion.
+   // Shared transaction advisory lock serializes with the admin revoker.\n   // The writer needs SELECT, not UPDATE, on authorization tables.\n   await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
    const s=await client.query(
-    "SELECT operator_id,revoked,expires_at FROM sandbox_review_sessions WHERE session_id=$1 FOR UPDATE",
+    "SELECT operator_id,revoked,expires_at FROM sandbox_review_sessions WHERE session_id=$1",
     [session.sessionId]);
    const g=await client.query(
-    "SELECT active FROM sandbox_review_grants WHERE operator_id=$1 AND permission=$2 FOR UPDATE",
+    "SELECT active FROM sandbox_review_grants WHERE operator_id=$1 AND permission=$2",
     [session.operatorId,"healthwise.checkout.review_evidence"]);
    const clock=now();
    if(!(clock instanceof Date) || !Number.isFinite(clock.getTime()))
