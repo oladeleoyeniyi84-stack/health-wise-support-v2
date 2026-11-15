@@ -29,7 +29,7 @@ try {
  await admin.query("GRANT USAGE ON SCHEMA "+q(schema)+" TO "+q(writer)+","+q(revoker));
  await admin.query("GRANT SELECT ON "+q(schema)+".sandbox_review_sessions,"+q(schema)+".sandbox_review_grants TO "+q(writer));
  const source=await readFile(new URL("../db/010_review_revocation_function_design.sql",import.meta.url),"utf8");
- assert.equal((source.match(/UPDATE REVIEWED_SCHEMA\./g)||[]).length,2,"expected two schema-qualified revocation UPDATE statements");
+ assert.equal((source.match(/UPDATE REVIEWED_SCHEMA\./g)||[]).length,3,"expected both session-revocation branches and the grant-revocation UPDATE");
  const ddl=source.replaceAll("REVIEWED_SCHEMA",q(schema)).replace("CREATE OR REPLACE FUNCTION sandbox_revoke_review_access","CREATE OR REPLACE FUNCTION "+q(schema)+".sandbox_revoke_review_access");
  const signature=q(schema)+".sandbox_revoke_review_access(text,text)";
  const client=await admin.connect();
