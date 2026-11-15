@@ -18,7 +18,10 @@ export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServer
   let begun=false;
   try{
    await client.query("BEGIN");begun=true;
-   // Shared transaction advisory lock serializes with the admin revoker.\n   // Existing row locks are retained until admin and writer adapters both\n   // use the same advisory-lock contract; no privilege change yet.\n   await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
+   // Shared transaction advisory lock serializes with the admin revoker.
+   // Existing row locks are retained until admin and writer adapters both
+   // use the same advisory-lock contract; no privilege change yet.
+   await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
    const s=await client.query(
     "SELECT operator_id,revoked,expires_at FROM sandbox_review_sessions WHERE session_id=$1 FOR UPDATE",
     [session.sessionId]);
