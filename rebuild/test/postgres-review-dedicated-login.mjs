@@ -29,6 +29,17 @@ try{
  assert.equal(identity.rows[0].session_user,role);
  assert.equal(identity.rows[0].rolsuper,false);
  assert.equal(identity.rows[0].rolcreaterole,false);
+ // A dedicated login must not inherit privileged role membership or bypass RLS.
+ const loginPrivileges=await writer.query(
+  "SELECT rolbypassrls,rolcreatedb,rolreplication FROM pg_roles WHERE rolname=current_user"
+ );
+ assert.equal(loginPrivileges.rows[0].rolbypassrls,false);
+ assert.equal(loginPrivileges.rows[0].rolcreatedb,false);
+ assert.equal(loginPrivileges.rows[0].rolreplication,false);
+ const privilegedMembership=await writer.query(
+  "SELECT EXISTS(SELECT 1 FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.member WHERE m.member=(SELECT oid FROM pg_roles WHERE rolname=current_user)) AS member"
+ );
+ assert.equal(privilegedMembership.rows[0].member,false,"writer must have no inherited role memberships");
  const withAuth=createPostgresLockedReviewAuthorization({
   pool:writer,useRowLocks:false,loadVerifiedServerSession:async()=>({verifiedByServer:true,sessionId,operatorId})
  });
