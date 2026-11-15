@@ -44,7 +44,7 @@ try {
   await client.query("COMMIT");
  }catch(e){await client.query("ROLLBACK");throw e;}finally{client.release();}
  const acl=await admin.query(
-  "SELECT p.prosecdef,p.proowner=(SELECT oid FROM pg_roles WHERE rolname=$2) AS owned,has_function_privilege($3,p.oid,'EXECUTE') AS writer_execute,has_function_privilege($4,p.oid,'EXECUTE') AS revoker_execute,EXISTS(SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee=0 AND a.privilege_type='EXECUTE') AS public_execute FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1 AND p.proname='sandbox_revoke_review_access'",
+  "SELECT p.prosecdef,p.proconfig,p.proowner=(SELECT oid FROM pg_roles WHERE rolname=$2) AS owned,has_function_privilege($3,p.oid,'EXECUTE') AS writer_execute,has_function_privilege($4,p.oid,'EXECUTE') AS revoker_execute,EXISTS(SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee=0 AND a.privilege_type='EXECUTE') AS public_execute FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname=$1 AND p.proname='sandbox_revoke_review_access'",
   [schema,owner,writer,revoker]);
  assert.equal(acl.rowCount,1);
  assert.equal(acl.rows[0].prosecdef,true);
@@ -52,6 +52,14 @@ try {
  assert.equal(acl.rows[0].writer_execute,false);
  assert.equal(acl.rows[0].revoker_execute,true);
  assert.equal(acl.rows[0].public_execute,false);
+ assert.ok(acl.rows[0].proconfig.includes("search_path=pg_catalog, pg_temp"),
+  "SECURITY DEFINER search_path must exclude writable caller schemas");
+ const schemaRights=await admin.query(
+  "SELECT has_schema_privilege($1,$2,'CREATE') AS writer_create, has_schema_privilege($3,$2,'CREATE') AS revoker_create",
+  [writer,schema,revoker]
+ );
+ assert.equal(schemaRights.rows[0].writer_create,false);
+ assert.equal(schemaRights.rows[0].revoker_create,false);
  const loginPool=role=>{
   const u=new URL(url);u.username=role;u.password=pw;
   return new Pool({connectionString:u.toString(),max:1});
