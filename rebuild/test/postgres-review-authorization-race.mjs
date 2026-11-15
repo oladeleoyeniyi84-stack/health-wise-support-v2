@@ -53,6 +53,37 @@ try{
   await blocker.query("COMMIT");
   await assert.rejects(pending,/review_operator_forbidden/);
  }finally{await blocker.query("ROLLBACK").catch(()=>{});blocker.release();}
+ // Session revocation must serialize with an in-flight evidence transaction too.
+ await pool.query("UPDATE sandbox_review_grants SET active=true WHERE operator_id=$1",[operatorId]);
+ const sessionEntered=deferred(),sessionRelease=deferred();
+ const sessionWrite=withLockedReviewAuthorization(async()=>{
+  sessionEntered.resolve();
+  await sessionRelease.promise;
+ });
+ await sessionEntered.promise;
+ let sessionRevocationDone=false;
+ const sessionRevocation=pool.query(
+  "UPDATE sandbox_review_sessions SET revoked=true WHERE session_id=$1",[sessionId]
+ ).then(()=>{sessionRevocationDone=true;});
+ const sessionProbe=await pool.query(
+  "SELECT revoked FROM sandbox_review_sessions WHERE session_id=$1",[sessionId]);
+ assert.equal(sessionProbe.rows[0].revoked,false);
+ assert.equal(sessionRevocationDone,false);
+ sessionRelease.resolve();
+ await sessionWrite;
+ await sessionRevocation;
+ assert.equal(sessionRevocationDone,true);
+ await assert.rejects(withLockedReviewAuthorization(async()=>{
+  throw Error("revoked_session_write");
+ }),/review_operator_forbidden/);
+ // Rollback path: failed evidence callback must not persist any partial write.
+ await pool.query("UPDATE sandbox_review_sessions SET revoked=false WHERE session_id=$1",[sessionId]);
+ await assert.rejects(withLockedReviewAuthorization(async({client})=>{
+  await client.query("INSERT INTO review_test_writes(id) VALUES(99)");
+  throw new Error("synthetic_evidence_failure");
+ }),/synthetic_evidence_failure/);
+ const rolledBack=await pool.query("SELECT count(*)::int AS n FROM review_test_writes WHERE id=99");
+ assert.equal(rolledBack.rows[0].n,0);
  console.log("PASS: disposable PostgreSQL serializes reviewer evidence and grant revocation in both orderings");
 }finally{
  await pool.end();
