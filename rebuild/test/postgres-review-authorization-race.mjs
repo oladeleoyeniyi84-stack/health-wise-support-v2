@@ -3,6 +3,7 @@ import {readFile} from "node:fs/promises";
 import {Pool} from "pg";
 import {assertDisposableDatabase} from "./support/disposable-db-guard.mjs";
 import {createPostgresLockedReviewAuthorization} from "../src/integrations/stripe-v2-postgres-review-authorization.mjs";
+import {revokeSandboxReviewerAccess} from "../src/integrations/stripe-v2-review-revocation.mjs";
 const url=assertDisposableDatabase({url:process.env.HEALTHWISE_TEST_DATABASE_URL,ack:process.env.HEALTHWISE_ISOLATED_DB_ACK});
 const schema="hw_review_race_"+process.pid;
 const admin=new Pool({connectionString:url,max:2,connectionTimeoutMillis:3000});
@@ -109,6 +110,33 @@ try{
  await withLockedReviewAuthorization(async({operator})=>{
   assert.equal(operator.id,operatorId);
  });
+ // Exercise the actual administrative revocation implementation, not only raw SQL.
+ const revokeByAdmin=()=>revokeSandboxReviewerAccess({
+  pool,operatorId,sessionId,authorizeAdministrator:async()=>true
+ });
+ const adminEntered=deferred(),adminRelease=deferred();
+ const inFlight=withLockedReviewAuthorization(async()=>{
+  adminEntered.resolve();await adminRelease.promise;
+ });
+ await adminEntered.promise;
+ let adminFinished=false;
+ const adminRevocation=revokeByAdmin().then(result=>{
+  adminFinished=true;return result;
+ });
+ const adminProbe=await pool.query("SELECT revoked FROM sandbox_review_sessions WHERE session_id=$1",[sessionId]);
+ assert.equal(adminProbe.rows[0].revoked,false);
+ assert.equal(adminFinished,false);
+ adminRelease.resolve();
+ await inFlight;
+ const revoked=await adminRevocation;
+ assert.equal(revoked.action,"review_access_revoked");
+ assert.equal(revoked.retryAllowed,false);
+ await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
+ const grantAfter=await pool.query("SELECT active FROM sandbox_review_grants WHERE operator_id=$1",[operatorId]);
+ assert.equal(grantAfter.rows[0].active,false);
+ // Repeated revocation is idempotent; revoked access must stay denied.
+ assert.equal((await revokeByAdmin()).action,"review_access_revoked");
+ await assert.rejects(withLockedReviewAuthorization(neverWrite),/review_operator_forbidden/);
  console.log("PASS: disposable PostgreSQL serializes reviewer evidence and grant revocation in both orderings");
 }finally{
  await pool.end();
