@@ -56,8 +56,8 @@ try{
   assert.ok(["42501","0LP01"].includes(e.code),e.message);
  }
  const publicGrant=await admin.query(
-  "SELECT has_table_privilege('public',$1,'SELECT') AS allowed",
-  [schema+".sandbox_review_grants"]
+  "SELECT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) acl WHERE n.nspname=$1 AND c.relname='sandbox_review_grants' AND acl.grantee=0 AND acl.privilege_type='SELECT') AS allowed",
+  [schema]
  );
  assert.equal(publicGrant.rows[0].allowed,false,"reviewer must not grant table access to PUBLIC");
  const result=await admin.query("SELECT revoked FROM "+quote(schema)+".sandbox_review_sessions");
