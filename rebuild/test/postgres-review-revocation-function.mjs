@@ -69,6 +69,24 @@ try {
  assert.equal(state.rows[0].active,false);
  const sessions=await admin.query("SELECT revoked FROM "+q(schema)+".sandbox_review_sessions");
  assert.equal(sessions.rows[0].revoked,true);
+ // A missing session must fail and rollback the grant update atomically.
+ const missingOperator="missing_"+suffix,missingSession="missing_session_"+suffix;
+ await admin.query("INSERT INTO "+q(schema)+".sandbox_review_grants VALUES($1,$2,true)",
+  [missingOperator,"healthwise.checkout.review_evidence"]);
+ await assert.rejects(
+  revokerPool.query("SELECT "+functionName+"($1,$2)",[missingOperator,missingSession]),
+  /review_revocation_target_missing/
+ );
+ const missingState=await admin.query(
+  "SELECT active FROM "+q(schema)+".sandbox_review_grants WHERE operator_id=$1",
+  [missingOperator]);
+ assert.equal(missingState.rows[0].active,true,"failed revocation must not partially disable grant");
+ // Repeated valid revocation remains idempotent and cannot reactivate access.
+ assert.equal(
+  (await revokerPool.query("SELECT "+functionName+"($1,$2) AS revoked",[operator,session])).rows[0].revoked,
+  true
+ );
+
  // Separate connections: revocation must wait for a cooperating authorization transaction.
  const raceOperator="race_"+suffix,raceSession="race_session_"+suffix;
  await admin.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES($1,$2,false,now()+interval '1 hour')",[raceSession,raceOperator]);
@@ -140,6 +158,34 @@ try {
   const revoked=await revokerPool.query("SELECT "+functionName+"($1,$2) AS revoked",[actualOperator,actualSession]);
   assert.equal(revoked.rows[0].revoked,true);
   await assert.rejects(withAuthorization(async()=>{throw new Error("callback_must_not_run");}),/review_operator_forbidden/);
+  // Reverse ordering: revoker commits before the reader begins authorization.
+  const reverseOperator="reverse_"+suffix,reverseSession="reverse_session_"+suffix;
+  await admin.query("INSERT INTO "+q(schema)+".sandbox_review_sessions VALUES($1,$2,false,now()+interval '1 hour')",
+   [reverseSession,reverseOperator]);
+  await admin.query("INSERT INTO "+q(schema)+".sandbox_review_grants VALUES($1,$2,true)",
+   [reverseOperator,"healthwise.checkout.review_evidence"]);
+  const reverseAuthorization=createPostgresLockedReviewAuthorization({
+   pool:adapterPool,useRowLocks:false,
+   loadVerifiedServerSession:async()=>({verifiedByServer:true,sessionId:reverseSession,operatorId:reverseOperator})
+  });
+  const reverseRevoker=await revokerPool.connect();
+  try {
+   await reverseRevoker.query("BEGIN");
+   const fnResult=await reverseRevoker.query("SELECT "+functionName+"($1,$2) AS revoked",
+    [reverseOperator,reverseSession]);
+   assert.equal(fnResult.rows[0].revoked,true);
+   await reverseRevoker.query("COMMIT");
+  } catch(error) {
+   await reverseRevoker.query("ROLLBACK").catch(()=>{});
+   throw error;
+  } finally {reverseRevoker.release();}
+  let unauthorizedCallbackInvocations=0;
+  await assert.rejects(
+   reverseAuthorization(async()=>{unauthorizedCallbackInvocations++;}),
+   /review_operator_forbidden/
+  );
+  assert.equal(unauthorizedCallbackInvocations,0);
+  console.log("PASS: committed revocation precedes reader; reviewer callback never executes");
   console.log("PASS: actual SELECT-only adapter holds lock through callback; post-revocation authorization denied");
  } finally {
   await adapterPool.end();
