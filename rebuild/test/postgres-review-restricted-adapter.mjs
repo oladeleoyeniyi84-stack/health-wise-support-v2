@@ -47,7 +47,7 @@ try{
  // Admin revocation uses the same advisory lock and a separately scoped pool.
  const revoker={connect:async()=>{
   const client=await admin.connect();await client.query("SET search_path TO "+q(schema));
-  return {query:(...args)=>client.query(...args),release:()=>{client.query("RESET search_path").finally(()=>client.release());}};
+  return {query:(...args)=>client.query(...args),release:()=>client.release(true)};
  }};
  await revokeSandboxReviewerAccess({pool:revoker,operatorId,sessionId,authorizeAdministrator:async()=>true});
  await assert.rejects(withAuth(async()=>{throw Error("unauthorized_callback");}),/review_operator_forbidden/);
