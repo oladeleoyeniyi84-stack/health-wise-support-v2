@@ -31,7 +31,8 @@ try {
  const source=await readFile(new URL("../db/010_review_revocation_function_design.sql",import.meta.url),"utf8");
  assert.equal((source.match(/UPDATE REVIEWED_SCHEMA\./g)||[]).length,3,"expected both session-revocation branches and the grant-revocation UPDATE");
  const ddl=source.replaceAll("REVIEWED_SCHEMA",q(schema)).replace("CREATE OR REPLACE FUNCTION sandbox_revoke_review_access","CREATE OR REPLACE FUNCTION "+q(schema)+".sandbox_revoke_review_access");
- const signature=q(schema)+".sandbox_revoke_review_access(text,text)";
+ const functionName=q(schema)+".sandbox_revoke_review_access";
+ const signature=functionName+"(text,text)";
  const client=await admin.connect();
  try{
   await client.query("BEGIN");
@@ -56,10 +57,10 @@ try {
   return new Pool({connectionString:u.toString(),max:1});
  };
  writerPool=loginPool(writer);revokerPool=loginPool(revoker);
- await assert.rejects(writerPool.query("SELECT "+signature+"($1,$2)",[operator,session]),e=>e.code==="42501");
+ await assert.rejects(writerPool.query("SELECT "+functionName+"($1,$2)",[operator,session]),e=>e.code==="42501");
  await assert.rejects(writerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
  await assert.rejects(revokerPool.query("UPDATE "+q(schema)+".sandbox_review_grants SET active=false"),e=>e.code==="42501");
- await assert.rejects(revokerPool.query("SELECT "+signature+"($1,$2)",["x",session]),/invalid_revocation_request/);
+ await assert.rejects(revokerPool.query("SELECT "+functionName+"($1,$2)",["x",session]),/invalid_revocation_request/);
  let state=await admin.query("SELECT active FROM "+q(schema)+".sandbox_review_grants");
  assert.equal(state.rows[0].active,true);
  const result=await revokerPool.query("SELECT "+signature+"($1,$2) AS revoked",[operator,session]);
