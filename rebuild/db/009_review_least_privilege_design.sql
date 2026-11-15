@@ -20,11 +20,20 @@ REVOKE ALL ON sandbox_review_sessions FROM healthwise_review_evidence_writer;
 REVOKE ALL ON sandbox_review_grants FROM healthwise_review_evidence_writer;
 REVOKE ALL ON sandbox_review_sessions FROM healthwise_review_access_admin;
 REVOKE ALL ON sandbox_review_grants FROM healthwise_review_access_admin;
--- Writer can only read server-owned authorization state and acquire row locks.
--- PostgreSQL SELECT ... FOR UPDATE requires UPDATE privilege on locked rows:
--- grant UPDATE only on non-identity lock columns; SQL UPDATE must be
--- blocked by a security-definer locking API or a separately reviewed RLS
--- policy. Until such an API exists, do NOT provision the writer role.
+-- Writer is SELECT-only on authorization state. It must NOT receive
+-- UPDATE/DELETE/INSERT or SELECT FOR UPDATE privileges on these tables.
+-- The isolated adapter can use useRowLocks=false and takes
+-- pg_advisory_xact_lock(720360,1) before reading authorization state.
+-- Every authorized session/grant mutation MUST acquire the same advisory
+-- transaction lock BEFORE touching these rows. A direct SQL UPDATE that
+-- bypasses this protocol can invalidate the concurrency guarantee.
+-- The current admin revocation adapter participates, but this design
+-- does NOT yet enforce the protocol against all possible mutation paths.
+-- No production writer role may be provisioned until a reviewed
+-- SECURITY DEFINER mutation API (or equivalent enforceable database
+-- boundary), dedicated DB login roles, privilege-negative tests, and
+-- revocation race tests are verified. The advisory lock is cooperative,
+-- not an independent database privilege boundary.
 --
 -- The admin role is intentionally NOT granted direct table mutation here.
 -- Revoke operations must run through a separately authorized, audited,
