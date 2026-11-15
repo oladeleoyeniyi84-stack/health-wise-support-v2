@@ -19,7 +19,7 @@ export async function revokeSandboxReviewerAccess({pool,operatorId,sessionId,per
  const client=await pool.connect();
  let begun=false;
  try{
-  await client.query("BEGIN");begun=true;
+  await client.query("BEGIN");begun=true;\n  // Same transaction advisory lock as the evidence writer.\n  await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
   // Fixed lock order: session before grant, matching the evidence writer.
   let sessions;
   if(sessionId!==undefined){
