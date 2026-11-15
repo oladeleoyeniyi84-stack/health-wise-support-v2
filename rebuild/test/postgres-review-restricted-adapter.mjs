@@ -43,6 +43,16 @@ try{
  // A clean authorized read-only transaction succeeds.
  const good=await withAuth(async({operator})=>operator.id);
  assert.equal(good,operatorId);
+ // Verify a restricted reviewer cannot change session revocation state.
+ await assert.rejects(withAuth(async({client})=>{
+  await assert.rejects(
+   client.query("UPDATE sandbox_review_sessions SET revoked=true"),
+   error=>error.code==="42501"
+  );
+  throw new Error("denied_session_mutation_rolled_back");
+ }),/denied_session_mutation_rolled_back/);
+ const unchanged=await admin.query("SELECT revoked FROM "+q(schema)+".sandbox_review_sessions");
+ assert.equal(unchanged.rows[0].revoked,false);
  // Admin revocation uses the same advisory lock and a separately scoped pool.
  const revoker={connect:async()=>{
   const client=await admin.connect();await client.query("SET search_path TO "+q(schema));
