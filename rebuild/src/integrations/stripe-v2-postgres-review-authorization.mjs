@@ -1,8 +1,11 @@
 /**
  * Engineering Vault only: PostgreSQL serialization adapter for evidence writes.
  * The caller MUST provide a trusted server-authenticated session loader.
- * Revocation MUST update the same session/grant rows (and therefore take
- * conflicting row locks) in PostgreSQL. No public route or Stripe calls.
+ * Revocation MUST use the same transaction advisory lock before mutation.
+ * With useRowLocks=false, authorization is SELECT-only and safety depends on
+ * every authorized mutation path honoring that lock; privileged bypasses
+ * remain possible until a database-enforced mutation boundary is deployed.
+ * No public route or Stripe calls.
  */
 export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServerSession,now=()=>new Date(),useRowLocks=true}={}){
  if(typeof pool?.connect!=="function" || typeof loadVerifiedServerSession!=="function" || typeof now!=="function" || typeof useRowLocks!=="boolean")
@@ -19,8 +22,8 @@ export function createPostgresLockedReviewAuthorization({pool,loadVerifiedServer
   try{
    await client.query("BEGIN");begun=true;
    // Shared transaction advisory lock serializes with the admin revoker.
-   // Existing row locks are retained until admin and writer adapters both
-   // use the same advisory-lock contract; no privilege change yet.
+   // Legacy row locks remain the default. SELECT-only mode requires a
+   // separately enforced mutation boundary before production use.
    await client.query("SELECT pg_advisory_xact_lock(720360, 1)");
    const lockClause=useRowLocks?" FOR UPDATE":"";
    const s=await client.query(
