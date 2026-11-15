@@ -26,10 +26,16 @@ try{
  await assert.rejects(admin.query("UPDATE "+ident(schema)+".grants SET active=false WHERE id='g'"),e=>e.code==="42501");
  await assert.rejects(admin.query("DELETE FROM "+ident(schema)+".sessions WHERE id='s'"),e=>e.code==="42501");
  await assert.rejects(admin.query("SELECT id FROM "+ident(schema)+".sessions FOR UPDATE"),e=>e.code==="42501");
+ await assert.rejects(admin.query("INSERT INTO "+ident(schema)+".sessions VALUES ('forged',false)"),e=>e.code==="42501");
+ await assert.rejects(admin.query("INSERT INTO "+ident(schema)+".grants VALUES ('forged',true)"),e=>e.code==="42501");
+ await assert.rejects(admin.query("DELETE FROM "+ident(schema)+".grants WHERE id='g'"),e=>e.code==="42501");
+ await assert.rejects(admin.query("TRUNCATE "+ident(schema)+".sessions"),e=>e.code==="42501");
+ await assert.rejects(admin.query("CREATE TABLE "+ident(schema)+".forged (id text)"),e=>e.code==="42501");
+
  await admin.query("RESET ROLE");
  const check=await admin.query("SELECT revoked FROM "+ident(schema)+".sessions WHERE id='s'");
  assert.equal(check.rows[0].revoked,false);
- console.log("PASS: disposable SELECT-only reviewer role cannot UPDATE, DELETE, or SELECT FOR UPDATE");
+ console.log("PASS: disposable SELECT-only reviewer role cannot INSERT, UPDATE, DELETE, TRUNCATE, CREATE, or SELECT FOR UPDATE");
 }finally{
  await admin.query("RESET ROLE").catch(()=>{});
  if(schemaCreated)await admin.query("DROP SCHEMA "+ident(schema)+" CASCADE").catch(()=>{});
