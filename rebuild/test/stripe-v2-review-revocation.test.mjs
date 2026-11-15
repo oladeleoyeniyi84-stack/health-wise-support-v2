@@ -26,7 +26,8 @@ test("trusted revocation updates session and grant in a single transaction",asyn
  assert.equal(result.action,"review_access_revoked");
  assert.equal(result.retryAllowed,false);
  assert.deepEqual(sql.map(x=>x.statement.split(" ")[0]),["BEGIN","SELECT","UPDATE","UPDATE","COMMIT"]);
- assert.match(sql[1].statement,/pg_advisory_xact_lock/);\n assert.match(sql[2].statement,/SET revoked=true/);
+ assert.match(sql[1].statement,/pg_advisory_xact_lock/);
+ assert.match(sql[2].statement,/SET revoked=true/);
  assert.match(sql[3].statement,/SET active=false/);
  assert.ok(sql.every(x=>!x.statement.includes("DELETE")));
 });
