@@ -24,6 +24,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build the allowlisted offline Engineering Vault artifact
+        run: |
+          node --check scripts/build-preview.mjs
+          node --check scripts/smoke-built-preview.mjs
+          npm run build:preview
+      - name: Smoke the actual packaged preview on localhost
+        run: npm run smoke:built
       - name: Run isolated dependency-free tests
         run: npm test
       - name: Verify real preview startup and forbidden routes on loopback
