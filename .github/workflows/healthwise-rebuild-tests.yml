@@ -46,6 +46,12 @@ jobs:
           node --check src/integrations/vault-mutation-gate.mjs
           node --check test/vault-mutation-gate.test.mjs
           node --check test/vault-mutation-loopback.test.mjs
+      - name: Build isolated candidate backend without production dependencies
+        run: |
+          node --check candidate/server.mjs
+          node --check candidate/start.mjs
+          node --check scripts/build-candidate.mjs
+          npm run build:candidate
       - name: Run isolated dependency-free tests
         run: npm test
       - name: Verify real preview startup and forbidden routes on loopback
