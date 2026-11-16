@@ -6,7 +6,8 @@
     "test": "node --test test/*.test.mjs",
     "preview:local": "node scripts/run-preview.mjs",
     "build:preview": "node scripts/build-preview.mjs",
-    "smoke:built": "node scripts/smoke-built-preview.mjs"
+    "smoke:built": "node scripts/smoke-built-preview.mjs",
+    "build:candidate": "node scripts/build-candidate.mjs"
   },
   "engines": {
     "node": ">=20"
