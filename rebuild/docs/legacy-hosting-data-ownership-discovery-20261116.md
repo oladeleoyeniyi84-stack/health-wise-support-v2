@@ -26,3 +26,31 @@ Before commissioning an app-specific database or performing a recovery rehearsal
 5. Maintain app-specific Engineering Vault NO-GO and founder approval for any changes or paid provisioning.
 
 **No deployment, migration, Stripe activation, secret access, production SQL, or infrastructure expense performed.**
+
+
+## Verified follow-up inventory — 2026-11-16 (read-only)
+Source: connected GitHub repository metadata and owner-confirmed Render workspace inventory. These are **infrastructure records only**, not database-content audits.
+
+### GitHub resource identities
+| Repository | Repository ID | Visibility | Default branch | Evidence limit |
+|---|---|---|---|---|
+| `oladeleoyeniyi84-stack/Health-wise` | `1038565186` | Private | `main` | README contains only a title; checked `package.json`, `render.yaml`, workflow directory and `server/index.ts` were not found |
+| `oladeleoyeniyi84-stack/Health-wise-support` | `1039146712` | Public | `main` | Repository existence does not establish database ownership |
+| `oladeleoyeniyi84-stack/health-wise-support-v2` | `1052390723` | Public | `main` | Draft PR #1 contains isolated rebuild code; deployment/history still unverified |
+
+### Render resource identities
+Workspace `tea-d79rav5m5p6s73a92740`:
+- `Elevate360BrandHub-1` — `srv-d88th2egvqtc73bf9mfg`, repository `Elevate360BrandHub`, branch `main`.
+- `Elevate360BrandHub` — `srv-d7ai3v14tr6s73ebts20`, repository `Elevate360BrandHub`, branch `main`.
+- `elevate360-stripe-sandbox-receiver` — `srv-dbj9s38473hc739q1d30`, repository `Elevate360BrandHub`, sandbox branch.
+- `elevate360-db` — `dpg-d892288jo6nc73de41fg-a`.
+- `elevate360-stripe-sandbox-db` — `dpg-dbj9rumtlv9c73ckct4g-a`.
+
+**No dedicated Healthwise service or database appeared in the inventoried workspace.** This does not establish that historical Healthwise records do not exist at another provider or in another workspace. The Brand Hub and Stripe sandbox databases are **not** authorized for Healthwise migration, backup or recovery by inference.
+
+### Ownership evidence needed before next architecture decision
+A verified provider/account administrator must supply a **non-sensitive resource inventory** for historical Healthwise hosting, database, authentication and durable file storage: provider name, service/database identifiers, environment purpose, responsible owner, relevant dates, backup/retention settings, and whether historical user/booking/payment/wellness records exist. Do not copy customer rows, credentials, connection strings, tokens or medical information into GitHub or this report.
+
+Until an authoritative historical owner and recovery source are confirmed, the safe next action is owner-controlled account inventory and retention review, **not** new database provisioning or schema migration.
+
+**Current decision remains Engineering Vault NO-GO.** No resource changes, production SQL, payment activation, deployment, cost or data access were performed in this read-only inventory.
