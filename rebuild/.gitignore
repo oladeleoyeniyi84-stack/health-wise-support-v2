@@ -1,3 +1,6 @@
 # Generated Healthwise Engineering Vault preview artifact.
 # Build output is local/CI-only and must never be committed or deployed.
 /dist-preview/
+
+# Engineering Vault candidate build; never commit generated binaries.
+/dist-candidate/
