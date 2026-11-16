@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "project": "Healthwise Support v2",
+  "scope": "engineering-vault",
+  "canonicalProductionBackendSelected": false,
+  "releaseDecision": "NO_GO",
+  "historicalData": {
+    "ownerVerified": false,
+    "hostingProviderVerified": false,
+    "databaseLocationVerified": false,
+    "recordInventoryVerified": false,
+    "retentionAndPrivacyObligationsReviewed": false,
+    "immutablePreservationEvidenceVerified": false,
+    "isolatedRestoreVerified": false
+  },
+  "application": {
+    "legacyBackendEntryVerified": false,
+    "cleanFullStackBuildVerified": false,
+    "trustedIdentityProviderIntegrated": false,
+    "ownedDatabaseProvisionedAndApproved": false,
+    "migrationsReviewedAndVerified": false,
+    "privateDurableMediaVerified": false,
+    "stagingSecurityVerified": false
+  },
+  "approvals": {
+    "costAndInfrastructure": false,
+    "migration": false,
+    "founderPublicRelease": false
+  }
+}
