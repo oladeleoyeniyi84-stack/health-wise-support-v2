@@ -6,12 +6,19 @@
 import {lstat,mkdir,rm,copyFile,writeFile,readFile} from "node:fs/promises";
 import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
+import {inspectCommittedCandidateReadiness} from "./check-canonical-readiness.mjs";
 const root=resolve(fileURLToPath(new URL("../",import.meta.url)));
 const out=join(root,"dist-candidate");
 if(process.env.NODE_ENV==="production" || process.env.RENDER!==undefined ||
    process.env.PORT!==undefined || process.env.HOST!==undefined ||
    process.env.HEALTHWISE_PUBLIC_RELEASE!==undefined)
  throw new Error("candidate_build_production_forbidden");
+// Refuse packaging when the committed provenance/release contract is absent,
+// malformed, or no longer explicitly locked to Engineering Vault NO-GO.
+const decision=await inspectCommittedCandidateReadiness();
+if(decision.decision!=="NO_GO" || decision.safeToPublish!==false ||
+   decision.safeToMigrate!==false || decision.productionBackendVerified!==false)
+ throw new Error("candidate_release_contract_not_blocked");
 const source=join(root,"candidate/server.mjs");
 const stat=await lstat(source);
 if(!stat.isFile() || stat.isSymbolicLink())
