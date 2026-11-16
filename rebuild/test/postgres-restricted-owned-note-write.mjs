@@ -45,7 +45,7 @@ try{
  const write=createRestrictedNoteWriteExecutor({
   pool:restricted,getVerifiedSessionId:async()=>trustedSession
  });
- const note=async id=record=>(await admin.query("SELECT note FROM "+q(schema)+".vault_owned_records WHERE record_id=$1",[id])).rows[0].note;
+ const note=async (id=record)=>(await admin.query("SELECT note FROM "+q(schema)+".vault_owned_records WHERE record_id=$1",[id])).rows[0].note;
  assert.equal(await write({recordId:record,note:"verified"}),true);
  assert.equal(await write({recordId:foreign,note:"other user"}),false);
  assert.equal(await note(record),"verified");
