@@ -51,3 +51,32 @@ test("same-origin styles are static; restricted routes remain disabled",async()=
   assert.equal((await response.json()).error,"feature_not_released");
  }
 });
+
+test("read-only consultation details escape content and never reveal provider IDs",async()=>{
+ const landing=await request("/");
+ const landingHtml=await landing.text();
+ assert.match(landingHtml,/href="\/consultations\/quick"/);
+ const response=await request("/consultations/quick");
+ const html=await response.text();
+ assert.equal(response.status,200);
+ assert.match(response.headers.get("x-robots-tag"),/noindex/);
+ assert.match(response.headers.get("content-security-policy"),/form-action 'none'/);
+ assert.match(html,/Engineering Vault/);
+ assert.match(html,/&lt;script&gt;alert\(&quot;x&quot;\)&lt;\/script&gt;/);
+ assert.doesNotMatch(html,/<script\b|<form\b|<button\b|<iframe\b/i);
+ assert.doesNotMatch(html,/price_Private123|calendly\.com|private-booking/);
+});
+test("unknown consultation IDs, unconfigured catalog, and write methods remain denied",async()=>{
+ for(const path of ["/consultations/invalid","/consultations/%2Fapi%2Fcheckout"]){
+  const response=await request(path);
+  assert.equal(response.status,404);
+ }
+ const attemptedPost=await request("/consultations/quick","POST");
+ assert.equal(attemptedPost.status,404);
+ const server=createPreviewServer();
+ await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
+ try{
+  const response=await fetch(`http://127.0.0.1:${server.address().port}/consultations/quick`);
+  assert.equal(response.status,404);
+ }finally{await new Promise(resolve=>server.close(resolve));}
+});
