@@ -35,6 +35,12 @@ jobs:
         run: |
           node --check scripts/audit-canonical-source.mjs
           node scripts/audit-canonical-source.mjs
+      - name: Syntax-check isolated HTTP mutation gate and CSRF lifecycle
+        run: |
+          node --check src/integrations/vault-session-lifecycle.mjs
+          node --check src/integrations/vault-mutation-gate.mjs
+          node --check test/vault-mutation-gate.test.mjs
+          node --check test/vault-mutation-loopback.test.mjs
       - name: Run isolated dependency-free tests
         run: npm test
       - name: Verify real preview startup and forbidden routes on loopback
