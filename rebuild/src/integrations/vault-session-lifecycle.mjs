@@ -83,7 +83,7 @@ export function createVaultSessionLifecycle({
    */
   async authorizeMutation({credential,origin,expectedOrigin,csrfHeader}={}){
    if(typeof expectedOrigin!=="string" || !/^https:\/\/[A-Za-z0-9.-]+(?::[0-9]+)?$/.test(expectedOrigin) ||
-      origin!==expectedOrigin || typeof csrfHeader!=="string")return false;
+      origin!==expectedOrigin || typeof csrfHeader!=="string" ||\n      !/^[A-Za-z0-9_-]{43}$/.test(csrfHeader))return false;
    const session=await authenticated(credential);
    if(!session || session.expiresAt.getTime()<=current())return false;
    const expected=Buffer.from(csrf(session.sessionId),"ascii");
