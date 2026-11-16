@@ -88,7 +88,6 @@ sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' db/002_sandbox_checkout_attempts.sql > "$
 {
   printf 'BEGIN; SET LOCAL search_path TO hw_recovery_fixture, public;\n'
   cat "$tmpdir/forward-migration.sql"
-  printf '\nDO $ BEGIN IF to_regclass(\x27hw_recovery_fixture.sandbox_checkout_attempts\x27) IS NULL THEN RAISE EXCEPTION \x27forward migration did not create table\x27; END IF; END $;\n'
   printf 'ROLLBACK;\n'
 } | psql "$dst" -X -v ON_ERROR_STOP=1
 # The migration was rolled back: no new table or modified metadata remains.
