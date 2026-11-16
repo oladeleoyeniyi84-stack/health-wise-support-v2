@@ -2,6 +2,11 @@
   "name": "healthwise-engineering-preview",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "engines": { "node": ">=20" }
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "preview:local": "node scripts/run-preview.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }
