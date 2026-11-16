@@ -27,6 +27,21 @@ INSERT INTO booking_entitlements(id,order_id,account_id,state)
  VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000001','ready');
 SQL
 docker run --rm --network host --user "$(id -u):$(id -g)" -v "$tmpdir:/backup" postgres:16-alpine pg_dump "$src" --format=custom --schema=hw_recovery_fixture --file=/backup/recovery.dump
+# Record and verify checksum of the isolated synthetic backup before restore.
+# A corrupted archive must fail the integrity check; never silently restore it.
+(
+ cd "$tmpdir"
+ sha256sum recovery.dump > recovery.sha256
+ sha256sum --status -c recovery.sha256
+ cp recovery.dump tampered.dump
+ printf 'synthetic-corruption' >> tampered.dump
+ sed 's/  recovery.dump$/  tampered.dump/' recovery.sha256 > tampered.sha256
+ if sha256sum --status -c tampered.sha256; then
+   echo 'FAIL: tampered backup was accepted by checksum verification'
+   exit 1
+ fi
+ rm tampered.dump tampered.sha256
+)
 docker run --rm --network host --user "$(id -u):$(id -g)" -v "$tmpdir:/backup:ro" postgres:16-alpine pg_restore --dbname="$dst" --exit-on-error --no-owner --no-privileges /backup/recovery.dump
 # Confirm restored schema structure matches the backup source, not only row counts.
 # Queries emit schema metadata only, never synthetic or customer records.
