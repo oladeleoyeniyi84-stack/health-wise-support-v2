@@ -19,11 +19,15 @@ if(!stat.isFile() || stat.isSymbolicLink())
 await rm(out,{recursive:true,force:true});
 await mkdir(out,{recursive:true});
 await copyFile(source,join(out,"server.mjs"));
+const startup=join(root,"candidate/start.mjs");
+const startStat=await lstat(startup);
+if(!startStat.isFile() || startStat.isSymbolicLink()) throw new Error("candidate_start_invalid");
+await copyFile(startup,join(out,"start.mjs"));
 const manifest={
  name:"healthwise-candidate-backend-vault",version:"0.0.0",
  private:true,type:"module",
  description:"Offline loopback-only backend candidate; NOT deployable",
- scripts:{start:"node server.mjs"}
+ scripts:{start:"node start.mjs"}
 };
 await writeFile(join(out,"package.json"),JSON.stringify(manifest,null,2)+"\n");
 if(!(await readFile(join(out,"server.mjs"),"utf8")).includes("engineering_vault_unreleased"))
