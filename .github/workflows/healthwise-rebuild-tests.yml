@@ -26,6 +26,10 @@ jobs:
           node-version: '22'
       - name: Run isolated dependency-free tests
         run: npm test
+      - name: Verify real preview startup and forbidden routes on loopback
+        run: |
+          node --check scripts/smoke-preview.mjs
+          node scripts/smoke-preview.mjs
   postgres-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 5
