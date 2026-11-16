@@ -9,7 +9,7 @@ Confirmed website service: `Elevate360BrandHub-1` (`srv-d88th2egvqtc73bf9mfg`), 
 BrandHub `client/src/pages/HealthWiseProduct.tsx` (at `d6b7dee`) explicitly labels itself a marketing page without a Healthwise API/dashboard. Its unavailable notice preserves the Engineering Vault restriction.
 
 ## GitHub repositories inspected
-- `oladeleoyeniyi84-stack/Health-wise`: private, `main`, minimal README; no deployment configuration identified through inspected paths.
+- `oladeleoyeniyi84-stack/Health-wise`: private, `main`, contains a scaffolded Flutter app under `healthwise_app/` and a `codemagic.yaml` iOS build configuration; the inspected `lib/main.dart` is the default counter demo, and `pubspec.yaml` lists Flutter and Cupertino icons, not an identified backend client. It is **not** evidence of an operational Healthwise backend or data source.
 - `oladeleoyeniyi84-stack/Health-wise-support`: public static/support-site README.
 - `oladeleoyeniyi84-stack/health-wise-support-v2`: public, `main` package.json describes an Express/React/Drizzle/PostgreSQL-oriented application; its `rebuild/healthwise-foundation-20261110` branch contains the isolated Engineering Vault work. Package dependencies and script names do **not** prove actual deployment, credentials, data ownership or recoverability.
 
@@ -34,7 +34,7 @@ Source: connected GitHub repository metadata and owner-confirmed Render workspac
 ### GitHub resource identities
 | Repository | Repository ID | Visibility | Default branch | Evidence limit |
 |---|---|---|---|---|
-| `oladeleoyeniyi84-stack/Health-wise` | `1038565186` | Private | `main` | README contains only a title; checked `package.json`, `render.yaml`, workflow directory and `server/index.ts` were not found |
+| `oladeleoyeniyi84-stack/Health-wise` | `1038565186` | Private | `main` | Repository README has only a title, but a Flutter scaffold exists in `healthwise_app/` with iOS/Android platform files and `codemagic.yaml`; inspected main Dart source is a demo counter, not verified backend connectivity |
 | `oladeleoyeniyi84-stack/Health-wise-support` | `1039146712` | Public | `main` | Repository existence does not establish database ownership |
 | `oladeleoyeniyi84-stack/health-wise-support-v2` | `1052390723` | Public | `main` | Draft PR #1 contains isolated rebuild code; deployment/history still unverified |
 
@@ -54,3 +54,12 @@ A verified provider/account administrator must supply a **non-sensitive resource
 Until an authoritative historical owner and recovery source are confirmed, the safe next action is owner-controlled account inventory and retention review, **not** new database provisioning or schema migration.
 
 **Current decision remains Engineering Vault NO-GO.** No resource changes, production SQL, payment activation, deployment, cost or data access were performed in this read-only inventory.
+
+## Additional source-history clarification (2026-11-16)
+Read-only full-tree inspection of `health-wise-support-v2/main` returned 90 tracked entries and showed a React/Vite frontend, a Capacitor config, and an Android workflow, but **no tracked `server/index.ts`, `drizzle.config.ts`, `android/gradlew`, or root `package-lock.json`**. GitHub path-filtered commit history returned no commits for those four paths. This supports the conclusion that the inspected repository cannot supply the missing canonical server or migration config by simply restoring those paths from its accessible commit history. It does not exclude external backups or other repositories.
+
+The main-branch `.github/workflows/deploy-android.yml` contains a debug Android build workflow; its signing and Play Store upload steps are commented out. That is not evidence of an Android release. A separate `capacitor.config.ts` declares a mobile bundle identifier, not an installed app or production backend.
+
+The private `Health-wise` repository's `codemagic.yaml` defines iOS simulator/device build jobs and an App Store Connect integration reference, while inspected `healthwise_app/lib/main.dart` remains a stock Flutter demonstration. Build configuration alone **cannot verify an App Store deployment, an active provider connection, historical data, or retention obligations**.
+
+**Data provenance decision:** There is still no verified Healthwise database/auth/media system-of-record from these repositories. Do not promote the isolated candidate or select a migration source until an authorized owner-controlled account inventory establishes those resources. No secret or customer data was inspected.
