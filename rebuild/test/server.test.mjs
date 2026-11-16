@@ -41,3 +41,22 @@ test("unrecognized routes are not exposed", async () => {
   const r = await request(createPreviewServer(), "/admin");
   assert.equal(r.status, 404);
 });
+
+test("administrative review and authentication routes remain unavailable", async () => {
+ for (const [path,method] of [
+  ["/api/admin/review/revoke","POST"],
+  ["/api/review/evidence","POST"],
+  ["/api/auth/session","GET"],
+  ["/api/admin/review/grants","POST"]
+ ]) {
+  const r = await request(createPreviewServer({ catalog: valid }),path,method);
+  assert.equal(r.status,503,`${method} ${path} must remain disabled`);
+  assert.equal(r.body.error,"feature_not_released");
+ }
+});
+test("arbitrary client-provided admin identity cannot unlock preview routes", async () => {
+ const r=await request(createPreviewServer({catalog:valid}),
+  "/api/admin/review/revoke?verifiedByServer=true&permission=healthwise.checkout.review_access.revoke","POST");
+ assert.equal(r.status,503);
+ assert.equal(r.body.error,"feature_not_released");
+});
