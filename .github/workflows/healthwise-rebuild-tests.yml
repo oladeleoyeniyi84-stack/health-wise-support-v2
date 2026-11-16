@@ -103,6 +103,15 @@ jobs:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
           HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
         run: node test/postgres-signed-stripe-e2e.mjs
+      - name: Verify signed session ownership through disposable PostgreSQL
+        env:
+          HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
+          HEALTHWISE_TEST_DATABASE_URL: postgres://healthwise_test:disposable_ci_only@127.0.0.1:5432/healthwise_disposable
+        run: |
+          node --check src/integrations/signed-session-verifier.mjs
+          node --check src/integrations/postgres-session-reader.mjs
+          node --check test/postgres-signed-owner-e2e.mjs
+          node test/postgres-signed-owner-e2e.mjs
       - name: Verify read-only owner isolation with disposable PostgreSQL
         env:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
