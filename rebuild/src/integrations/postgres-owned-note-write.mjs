@@ -1,5 +1,10 @@
 /**
- * Engineering Vault ONLY. A deliberately narrow, fixed-SQL write adapter.
+ * Engineering Vault ONLY. Legacy direct-lock experiment; NOT RELEASE ELIGIBLE.
+ * With a least-privileged role, PostgreSQL FOR UPDATE/SHARE needs UPDATE
+ * privileges on session/grant tables; never grant those to make this pass.
+ * Use postgres-restricted-note-write.mjs and its audited EXECUTE-only routine
+ * for subsequent isolated experiments. This adapter is retained solely as a
+ * denial regression and MUST NOT be wired to HTTP or production.
  * Never wire to a live pool or HTTP route. A caller supplies the session id
  * ONLY from independently authenticated server middleware, never the client.
  *
