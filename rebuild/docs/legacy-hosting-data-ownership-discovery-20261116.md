@@ -63,3 +63,21 @@ The main-branch `.github/workflows/deploy-android.yml` contains a debug Android 
 The private `Health-wise` repository's `codemagic.yaml` defines iOS simulator/device build jobs and an App Store Connect integration reference, while inspected `healthwise_app/lib/main.dart` remains a stock Flutter demonstration. Build configuration alone **cannot verify an App Store deployment, an active provider connection, historical data, or retention obligations**.
 
 **Data provenance decision:** There is still no verified Healthwise database/auth/media system-of-record from these repositories. Do not promote the isolated candidate or select a migration source until an authorized owner-controlled account inventory establishes those resources. No secret or customer data was inspected.
+
+
+## Verified connected-account scope — 2026-11-16 follow-up
+
+**Render:** The connected Render account's workspace list returned a single accessible workspace, `Elevate360 Brand Hub` (`tea-d79rav5m5p6s73a92740`). Its previously inventoried services and databases were Brand Hub/sandbox resources. This establishes only the scope of the *connected account*, not the absence of Healthwise infrastructure in unconnected accounts or providers.
+
+**Stripe:** The connected Stripe account listing returned one explicitly named `Healthwise Support Sandbox`, context `acct_1T36fzDSAM5aSpF4`, `livemode=false`. This is verified **test-mode account metadata**, not confirmation of a live Stripe integration, completed charges, customer records, database ownership, webhooks, or approved public payments. No account-specific Stripe operations, transactions, customer-data reads or credential changes were performed.
+
+**GitHub metadata limitations:** The available read-only GitHub connector did not permit deployment, environment, webhook, secret or Pages metadata endpoints for this repository. Do not infer any of those resources are absent; request owner-reviewed account inventory if their existence matters.
+
+### Owner-controlled evidence gate before provisioning or migration
+1. Confirm any historical Healthwise hosting account and environment identifiers, without sharing secrets.
+2. Identify the historical identity store, user/booking/wellness data and private storage ownership without copying records into GitHub.
+3. Confirm whether the Healthwise Stripe sandbox is the intended future test account and separately review live account ownership before any payment integration; **do not switch modes or activate payments here**.
+4. Document backup retention, ownership and isolated restore feasibility before selecting an app-owned production database.
+5. Retain the isolated backend candidate and no-publication guard until all release evidence is independently verified and founder-approved.
+
+**Status: historical production system of record still UNKNOWN; Engineering Vault NO-GO.**
