@@ -6,7 +6,7 @@ import {
 const fixture=()=>({
  provider:"stripe",resourceKind:"payment-test-account",
  resourceId:"acct_1T36fzDSAM5aSpF4",environment:"test",
- ownerEvidence:"owner-dashboard-reviewed",
+ ownerEvidence:"connected-account-listed",
  historicalData:"unknown",backupEvidence:"unknown"
 });
 
@@ -17,6 +17,8 @@ test("known non-sensitive resource metadata is inventory only, never release app
  assert.equal(record.safeToPublish,false);
  assert.equal(record.productionOwnershipVerified,false);
  assert.equal(record.recoveryVerified,false);
+ assert.equal(record.ownerEvidence,"connected-account-listed");
+ assert.notEqual(record.ownerEvidence,"owner-dashboard-reviewed");
  const report=inspectProviderInventory([fixture()]);
  assert.equal(report.decision,"NO_GO");
  assert.equal(report.historicalSourceOfTruthVerified,false);
