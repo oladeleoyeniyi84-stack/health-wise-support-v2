@@ -65,19 +65,39 @@ try{
  await admin.query("UPDATE "+q(schema)+".vault_sessions SET revoked=false,expires_at=now()-interval '1 minute' WHERE session_id=$1",[sid]);
  assert.equal(await write({recordId:record,note:"denied expired"}),false);
  await admin.query("UPDATE "+q(schema)+".vault_sessions SET expires_at=now()+interval '1 hour' WHERE session_id=$1",[sid]);
- // Revocation takes the session-row lock first, so a pending write must
- // re-evaluate the revoked predicate after that transaction commits.
+ // Verify the pending mutation is ACTUALLY blocked by the session-row
+ // lock, rather than inferring lock ordering from an arbitrary delay.
  const lock=await admin.connect();
+ const pendingClient=await restricted.connect();
+ let pending;
  try{
+  const holderPid=(await lock.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+  const pendingPid=(await pendingClient.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
   await lock.query("BEGIN");
   await lock.query("SELECT session_id FROM "+q(schema)+".vault_sessions WHERE session_id=$1 FOR UPDATE",[sid]);
-  const pending=write({recordId:record,note:"race denied"});
-  await new Promise(resolve=>setTimeout(resolve,60));
+  const pendingWrite=createRestrictedNoteWriteExecutor({
+   pool:{query:(...args)=>pendingClient.query(...args)},
+   getVerifiedSessionId:async()=>sid
+  });
+  pending=pendingWrite({recordId:record,note:"race denied"});
+  const deadline=Date.now()+5000;
+  let observedBlock=false;
+  while(Date.now()<deadline){
+   const probe=await admin.query("SELECT pg_blocking_pids($1) AS blockers",[pendingPid]);
+   if(probe.rows[0].blockers.includes(holderPid)){
+    observedBlock=true;
+    break;
+   }
+   await new Promise(resolve=>setTimeout(resolve,25));
+  }
+  assert.equal(observedBlock,true,"must observe the writer blocked by the revocation transaction");
   await lock.query("UPDATE "+q(schema)+".vault_sessions SET revoked=true WHERE session_id=$1",[sid]);
   await lock.query("COMMIT");
-  assert.equal(await pending,false);
+  assert.equal(await pending,false,"revoked session cannot complete the pending mutation");
  }finally{
   await lock.query("ROLLBACK").catch(()=>{});
+  if(pending)await pending.catch(()=>{});
+  pendingClient.release();
   lock.release();
  }
  assert.equal(await note(record),"verified");
