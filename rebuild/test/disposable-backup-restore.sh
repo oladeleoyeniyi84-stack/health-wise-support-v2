@@ -82,4 +82,22 @@ BEGIN
   END;
 END $$;
 SQL
+# Rehearse a forward migration only inside a rolled-back transaction on
+# the restored disposable database. No schema change may survive rollback.
+sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' db/002_sandbox_checkout_attempts.sql > "$tmpdir/forward-migration.sql"
+{
+  printf 'BEGIN; SET LOCAL search_path TO hw_recovery_fixture, public;\n'
+  cat "$tmpdir/forward-migration.sql"
+  printf '\nDO $ BEGIN IF to_regclass(\x27hw_recovery_fixture.sandbox_checkout_attempts\x27) IS NULL THEN RAISE EXCEPTION \x27forward migration did not create table\x27; END IF; END $;\n'
+  printf 'ROLLBACK;\n'
+} | psql "$dst" -X -v ON_ERROR_STOP=1
+# The migration was rolled back: no new table or modified metadata remains.
+psql "$dst" -X -v ON_ERROR_STOP=1 -At -f "$tmpdir/schema-metadata.sql" > "$tmpdir/after-rollback-schema.txt"
+if ! cmp -s "$tmpdir/restore-schema.txt" "$tmpdir/after-rollback-schema.txt"; then
+  echo 'FAIL: rolled-back migration changed restored schema metadata'
+  exit 1
+fi
+postrollback="$(psql "$dst" -X -v ON_ERROR_STOP=1 -At -c "SELECT to_regclass('hw_recovery_fixture.sandbox_checkout_attempts') IS NULL")"
+[[ "$postrollback" == "t" ]] || { echo 'FAIL: migration table remained after rollback'; exit 1; }
+echo 'PASS: disposable forward migration executes and transaction rollback preserves restored schema'
 echo 'PASS: disposable CI fixture backup and isolated restore preserve schema, indexes, constraints, synthetic rows, uniqueness, and foreign keys'
