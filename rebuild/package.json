@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "preview:local": "node scripts/run-preview.mjs"
+    "preview:local": "node scripts/run-preview.mjs",
+    "build:preview": "node scripts/build-preview.mjs",
+    "smoke:built": "node scripts/smoke-built-preview.mjs"
   },
   "engines": {
     "node": ">=20"
