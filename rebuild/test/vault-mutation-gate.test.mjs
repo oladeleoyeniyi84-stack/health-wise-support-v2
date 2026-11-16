@@ -18,7 +18,7 @@ function build(counts,options={}){
  return createVaultMutationGate({
   expectedOrigin:"https://healthwisesupport.test",
   assertTrustedTransport:async()=>{counts.transport++;return options.transport??true;},
-  authenticateRequest:async()=>{counts.auth++;return options.context??Object.freeze({scope:"test"});},
+  authenticateRequest:async()=>{counts.auth++;return Object.hasOwn(options,"context")?options.context:Object.freeze({scope:"test"});},
   authorizeMutation:async()=>{counts.csrf++;return options.csrf??true;},
   authorizeOperation:async()=>{counts.policy++;return options.policy??true;}
  });
