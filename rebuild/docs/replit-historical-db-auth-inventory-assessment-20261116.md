@@ -48,3 +48,23 @@
 **Next authorized read-only evidence:** owner reviews existing Replit Production Database → Settings, redacts account-identifying or sensitive data, and records only latest successful scheduled-backup timestamp/status, exact retention and recovery window, and provider-confirmed separate-destination capability and cost. Obtain explicit written confirmation from Replit before any preservation/restore operation. No restore, exports, customer-data queries, settings changes, resource provisioning or paid activation.
 
 **Decision unchanged: HISTORICAL_RECOVERY_UNVERIFIED / RELEASE_NO_GO.**
+
+## Owner-supplied Replit production settings and backup-list screenshots — November 16, 2026
+
+**Evidence:** Founder supplied screenshots of the original Replit database UI for **Production Database → Settings**, expanded **Scheduled backups**, expanded **Point-in-time recovery**, and **View all backups** (backup restoration dialog). Images were inspected in the conversation, **not deposited in this public repository**. Evidence is UI-visible configuration and listed recovery options, not a backup integrity or restore receipt.
+
+- The database panel labels the **Production Database** as **Active** and displays **53.98 MB of 100 GB** storage. This is a Replit interface status and storage usage, not independent primary SQL health or proof of customer-record presence.
+- **Point-in-time recovery: On · last 7 days**, with the expanded field showing **Recovery window: 7 Days**. The visible **Restore database…** action is **not authorized**.
+- **Scheduled backups: On · kept 7 days**, with **Keep backups for: 7 days**. The screen explicitly explains backups can be skipped while automatically scaled down for inactivity and no data changes; the overview says **Last backup last week**.
+- The backup-list dialog shows **one visible Scheduled entry: November 8, 2026, 12:00 AM**, with a visible **Restore** action and text **Kept for 7 days**. Time zone, backup identifier, completion receipt, content integrity, preservation status and exact expiry are **not shown**.
+- The dialog says restoring **switches the database to that day's data** and that current data **isn't deleted**. Even if underlying snapshots are retained, this is an active-database switch and **does not establish a separate isolated restoration destination**.
+- As of November 16, a Nov 8 timestamp plus a strict seven-day lifetime would conventionally reach Nov 15. The entry nevertheless appears in the supplied UI. **Do not infer expiration or successful restorability solely from the arithmetic or visible button.** Ask Replit for actual retention semantics and current availability.
+
+### Required written provider confirmation before any action
+1. Is the **Nov 8, 2026 12:00 AM scheduled recovery point** still valid and recoverable for this specific production database? Give a non-sensitive backup identifier, completion status, timezone and expiry, if available.
+2. Can Replit preserve, export or restore that recovery point to a **distinct access-controlled target** without switching or altering the current production database? If unsupported, state so explicitly and list permitted alternatives.
+3. Can the current database and any available newer backups be protected against scheduled expiry **without** a production switch? Identify any service changes and exact anticipated costs. **Do not make changes pending owner approval**.
+4. What is the present PITR earliest/latest recoverable point, and does the seven-day rolling window remain active while the application is suspended or idle?
+5. Does a proposed recovery require reading/transferring sensitive wellness information or payment/order records, and what secure owner-authorized handling route is supported? **Do not send data or credentials into chat, GitHub, or support tickets**.
+
+**Restrictions unchanged:** Never click Restore, reveal or copy `DATABASE_URL`, change retention, query customer rows, provision a database, make payment requests, merge PR #1, or deploy. **HISTORICAL_RECOVERY_UNVERIFIED / RELEASE_NO_GO.**
