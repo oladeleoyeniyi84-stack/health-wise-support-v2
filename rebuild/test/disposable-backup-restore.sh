@@ -108,5 +108,16 @@ if ! cmp -s "$tmpdir/restore-schema.txt" "$tmpdir/after-rollback-schema.txt"; th
 fi
 postrollback="$(psql "$dst" -X -v ON_ERROR_STOP=1 -At -c "SELECT to_regclass('hw_recovery_fixture.sandbox_checkout_attempts') IS NULL")"
 [[ "$postrollback" == "t" ]] || { echo 'FAIL: migration table remained after rollback'; exit 1; }
+# Confirm rollback did not modify the restored financial/entitlement fixture.
+# Check only aggregate invariants; never emit customer records.
+postrollback_data="$(psql "$dst" -X -v ON_ERROR_STOP=1 -At <<'SQLDATA'
+SELECT
+ (SELECT count(*) FROM hw_recovery_fixture.accounts)=1
+ AND (SELECT count(*) FROM hw_recovery_fixture.consultation_orders WHERE status='paid' AND amount_minor=1500)=1
+ AND (SELECT count(*) FROM hw_recovery_fixture.provider_events)=1
+ AND (SELECT count(*) FROM hw_recovery_fixture.booking_entitlements WHERE state='ready')=1;
+SQLDATA
+)"
+[[ "$postrollback_data" == "t" ]] || { echo 'FAIL: migration rollback altered restored transaction fixture'; exit 1; }
 echo 'PASS: disposable forward migration executes and transaction rollback preserves restored schema'
 echo 'PASS: disposable CI fixture backup and isolated restore preserve schema, indexes, constraints, synthetic rows, uniqueness, and foreign keys'
