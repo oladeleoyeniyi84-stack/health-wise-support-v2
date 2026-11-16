@@ -21,8 +21,8 @@ async function start(overrides={}){
 
 test("engineering preview denies production and external binding environments",async()=>{
  for(const overrides of [
-  {NODE_ENV:"production"},{RENDER:"true"},{PORT:"10000"},
-  {HOST:"0.0.0.0"},{HEALTHWISE_PUBLIC_RELEASE:"true"}
+  {NODE_ENV:"production"},{RENDER:"true"},{RENDER:"false"},{PORT:"10000"},
+  {HOST:"0.0.0.0"},{HEALTHWISE_PUBLIC_RELEASE:"true"},{HEALTHWISE_PUBLIC_RELEASE:"false"}
  ]){
   const run=await start(overrides);
   const [code]=await once(run.child,"exit");
