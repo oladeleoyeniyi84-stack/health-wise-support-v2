@@ -28,6 +28,34 @@ INSERT INTO booking_entitlements(id,order_id,account_id,state)
 SQL
 docker run --rm --network host --user "$(id -u):$(id -g)" -v "$tmpdir:/backup" postgres:16-alpine pg_dump "$src" --format=custom --schema=hw_recovery_fixture --file=/backup/recovery.dump
 docker run --rm --network host --user "$(id -u):$(id -g)" -v "$tmpdir:/backup:ro" postgres:16-alpine pg_restore --dbname="$dst" --exit-on-error --no-owner --no-privileges /backup/recovery.dump
+# Confirm restored schema structure matches the backup source, not only row counts.
+# Queries emit schema metadata only, never synthetic or customer records.
+cat > "$tmpdir/schema-metadata.sql" <<'SQLMETA'
+SELECT 'table:' || table_name
+FROM information_schema.tables
+WHERE table_schema='hw_recovery_fixture' AND table_type='BASE TABLE'
+UNION ALL
+SELECT 'column:' || table_name || ':' || ordinal_position || ':' ||
+       column_name || ':' || data_type || ':' || is_nullable
+FROM information_schema.columns
+WHERE table_schema='hw_recovery_fixture'
+UNION ALL
+SELECT 'constraint:' || c.conrelid::regclass::text || ':' ||
+       c.conname || ':' || pg_get_constraintdef(c.oid)
+FROM pg_constraint c
+JOIN pg_namespace n ON n.oid=c.connamespace
+WHERE n.nspname='hw_recovery_fixture'
+UNION ALL
+SELECT 'index:' || tablename || ':' || indexname || ':' || indexdef
+FROM pg_indexes WHERE schemaname='hw_recovery_fixture'
+ORDER BY 1;
+SQLMETA
+psql "$src" -X -v ON_ERROR_STOP=1 -At -f "$tmpdir/schema-metadata.sql" > "$tmpdir/source-schema.txt"
+psql "$dst" -X -v ON_ERROR_STOP=1 -At -f "$tmpdir/schema-metadata.sql" > "$tmpdir/restore-schema.txt"
+if ! cmp -s "$tmpdir/source-schema.txt" "$tmpdir/restore-schema.txt"; then
+  echo 'FAIL: restored schema metadata does not match backup source'
+  exit 1
+fi
 psql "$dst" -v ON_ERROR_STOP=1 <<'SQL'
 SET search_path TO hw_recovery_fixture, public;
 DO $$
@@ -54,4 +82,4 @@ BEGIN
   END;
 END $$;
 SQL
-echo 'PASS: disposable CI fixture backup and isolated restore preserve synthetic rows, uniqueness, and foreign keys'
+echo 'PASS: disposable CI fixture backup and isolated restore preserve schema, indexes, constraints, synthetic rows, uniqueness, and foreign keys'
