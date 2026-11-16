@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { publicConsultationCatalog } from "./domain/public-catalog.mjs";
+import {renderEngineeringPreview,engineeringPreviewCss} from "./preview-page.mjs";
 
 /**
  * Safe preview server. No Stripe, Calendly, database, or network provider calls.
@@ -12,6 +13,20 @@ export function createPreviewServer({ catalog = [] } = {}) {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+    // Static, read-only engineering UI. No forms, external assets or scripts.
+    // Public release stays blocked by the launcher and deployment policy.
+    if(req.method==="GET" && path==="/"){
+      res.setHeader("Content-Type","text/html; charset=utf-8");
+      res.setHeader("X-Robots-Tag","noindex, nofollow, noarchive");
+      res.setHeader("Content-Security-Policy","default-src 'none'; style-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      res.writeHead(200);
+      return res.end(renderEngineeringPreview(catalog));
+    }
+    if(req.method==="GET" && path==="/preview.css"){
+      res.setHeader("Content-Type","text/css; charset=utf-8");
+      res.writeHead(200);
+      return res.end(engineeringPreviewCss);
+    }
     if (req.method === "GET" && path === "/health") {
       res.writeHead(200);
       return res.end(JSON.stringify({ ok: true, mode: "engineering-preview", release: "blocked" }));
