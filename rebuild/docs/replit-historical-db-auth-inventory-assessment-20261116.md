@@ -32,3 +32,19 @@
 **Still unknown:** historical row existence/quantity, backup recovery success, authoritative Replit resource association, primary status, data retention obligations, application identity migration, production security readiness and cost.
 
 **Decision: LEGACY_REPLIT_DATABASE_CANDIDATE_REPORTED / HISTORICAL_RECOVERY_UNVERIFIED / RELEASE_NO_GO.**
+
+
+## Recovery documentation follow-up — founder-supplied Replit report, November 16, 2026
+
+**Source distinction:** The latest founder-provided report summarizes [Replit Data recovery](https://docs.replit.com/features/data-and-storage/data-recovery) and [Publishing and Database Billing](https://docs.replit.com/billing/about-usage-based-billing). This report is not a screenshot or direct inspection of Healthwise's own **Production Database → Settings** page.
+
+- Documented standard production PITR is a rolling seven-day window, with longer windows on eligible plans; documented scheduled backup retention options are 7, 14 or 28 days depending on plan. **No Healthwise-specific current retention setting, successful backup receipt or recovery interval was inspected.**
+- Replit's documented standard production restore replaces the live production database. There is **no established isolated destination procedure** in the cited standard restore flow. **Never initiate a restore as a test.**
+- The report quotes PITR-history storage at **$0.20/GiB-month** and scheduled-backup storage at **$0.09/GiB-month**; these are *storage rates*, not approval or a full price for an isolated database restore. Current account rates and eligibility must be checked before any billed work.
+- The previously founder-reported **November 6, 2026** scheduled backup has **no independently verified completion receipt**. As of **November 16, 2026**, a November 6 snapshot with exactly seven-day retention would ordinarily be outside that window around November 13. This is a conditional calendar inference, not proof the snapshot existed, completed or expired, nor proof that newer backups or PITR history are unavailable.
+- The Replit report uses a stale historical **November 5** current-date context. Record all event times and timezone explicitly; as of November 16, November 6 is in the past. Do not mistake it for a future schedule.
+- Project-specific backup list, earliest/latest PITR points, expiry, production-primary status, replica freshness, separate-target feasibility and estimated recovery cost remain **UNKNOWN**.
+
+**Next authorized read-only evidence:** owner reviews existing Replit Production Database → Settings, redacts account-identifying or sensitive data, and records only latest successful scheduled-backup timestamp/status, exact retention and recovery window, and provider-confirmed separate-destination capability and cost. Obtain explicit written confirmation from Replit before any preservation/restore operation. No restore, exports, customer-data queries, settings changes, resource provisioning or paid activation.
+
+**Decision unchanged: HISTORICAL_RECOVERY_UNVERIFIED / RELEASE_NO_GO.**
