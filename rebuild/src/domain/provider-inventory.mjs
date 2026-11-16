@@ -29,7 +29,7 @@ export function validateProviderInventoryRecord(input){
  if(!PROVIDERS.has(provider) || !KINDS.has(resourceKind) ||
     !ENVS.has(environment) || !DATA.has(historicalData) ||
     !BACKUP.has(backupEvidence) ||
-    !["unverified","owner-dashboard-reviewed"].includes(ownerEvidence) ||
+    !["unverified","connected-account-listed","owner-dashboard-reviewed"].includes(ownerEvidence) ||
     typeof resourceId!=="string" || !RESOURCE.test(resourceId))
   throw new Error("inventory_record_value_invalid");
  // resourceId is a provider-generated identifier only, never a full
