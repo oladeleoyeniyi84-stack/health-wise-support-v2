@@ -31,6 +31,10 @@ jobs:
           npm run build:preview
       - name: Smoke the actual packaged preview on localhost
         run: npm run smoke:built
+      - name: Report canonical legacy source readiness (read-only NO-GO)
+        run: |
+          node --check scripts/audit-canonical-source.mjs
+          node scripts/audit-canonical-source.mjs
       - name: Run isolated dependency-free tests
         run: npm test
       - name: Verify real preview startup and forbidden routes on loopback
