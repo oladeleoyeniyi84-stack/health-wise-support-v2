@@ -35,6 +35,11 @@ jobs:
         run: |
           node --check scripts/audit-canonical-source.mjs
           node scripts/audit-canonical-source.mjs
+      - name: Syntax-check request-scoped restricted HTTP SQL bridge
+        run: |
+          node --check src/integrations/vault-restricted-http-bridge.mjs
+          node --check src/integrations/postgres-restricted-note-write.mjs
+          node --check test/vault-restricted-http-bridge.test.mjs
       - name: Syntax-check isolated HTTP mutation gate and CSRF lifecycle
         run: |
           node --check src/integrations/vault-session-lifecycle.mjs
