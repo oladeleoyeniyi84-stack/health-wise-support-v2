@@ -52,6 +52,10 @@ jobs:
           node --check candidate/start.mjs
           node --check scripts/build-candidate.mjs
           npm run build:candidate
+      - name: Audit canonical provenance and release blockers (offline)
+        run: |
+          node --check scripts/check-canonical-readiness.mjs
+          node scripts/check-canonical-readiness.mjs
       - name: Run isolated dependency-free tests
         run: npm test
       - name: Verify real preview startup and forbidden routes on loopback
