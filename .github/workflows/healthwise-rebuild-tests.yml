@@ -177,6 +177,8 @@ jobs:
         env:
           PGPASSWORD: disposable_ci_only
         run: createdb -h 127.0.0.1 -p 5432 -U healthwise_test healthwise_restore_disposable
+      - name: Syntax-check disposable recovery script
+        run: bash -n test/disposable-backup-restore.sh
       - name: Exercise synthetic backup and isolated restore
         env:
           HEALTHWISE_ISOLATED_DB_ACK: YES_DISPOSABLE_DB
