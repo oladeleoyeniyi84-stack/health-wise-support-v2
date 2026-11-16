@@ -91,12 +91,12 @@ sed -e '/^BEGIN;$/d' -e '/^COMMIT;$/d' db/002_sandbox_checkout_attempts.sql > "$
   # Fail if the migration silently did nothing; SQL must see the new table
   # before the surrounding transaction is rolled back.
   cat <<'SQLCHECK'
-DO $
+DO $migration_check$
 BEGIN
  IF to_regclass('hw_recovery_fixture.sandbox_checkout_attempts') IS NULL THEN
    RAISE EXCEPTION 'forward_migration_table_missing';
  END IF;
-END $;
+END $migration_check$;
 SQLCHECK
   printf 'ROLLBACK;\n'
 } | psql "$dst" -X -v ON_ERROR_STOP=1
