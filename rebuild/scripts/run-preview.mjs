@@ -6,10 +6,10 @@
 import {createPreviewServer} from "../src/server.mjs";
 
 if(process.env.NODE_ENV==="production" ||
-   process.env.RENDER==="true" ||
+   process.env.RENDER!==undefined ||
    process.env.PORT ||
    process.env.HOST ||
-   process.env.HEALTHWISE_PUBLIC_RELEASE==="true"){
+   process.env.HEALTHWISE_PUBLIC_RELEASE!==undefined){
   console.error("engineering_preview_public_start_forbidden");
   process.exit(2);
 }
