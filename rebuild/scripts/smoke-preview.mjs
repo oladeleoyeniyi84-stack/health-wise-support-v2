@@ -26,11 +26,11 @@ try {
   }
   const page=await fetch(origin+"/",{signal:AbortSignal.timeout(3000)});
   assert.equal(page.status,200);
-  assert.match(page.headers.get("content-type"),/^text\\/html/);
+  assert.ok(page.headers.get("content-type")?.startsWith("text/html"));
   assert.match(page.headers.get("x-robots-tag"),/noindex/);
   const pageHtml=await page.text();
   assert.match(pageHtml,/Engineering Vault — Not released/);
-  assert.doesNotMatch(pageHtml,/<form\\b|<script\\b/i);
+  assert.ok(!pageHtml.includes("<form") && !pageHtml.includes("<script"));
   await check("/health","GET",200);
   await check("/api/consultations","GET",503,"catalog_not_configured");
   await check("/api/checkout","POST",503,"feature_not_released");
